@@ -19,7 +19,6 @@ const navItems = [
     group: "Portfolio",
     links: [
       { href: "/portfolio", label: "Portfolio Analytics", icon: <PieChartIcon /> },
-      // { href: "/trends", label: "Planning Trends", icon: <BarChartIcon /> },
     ],
   },
   {
