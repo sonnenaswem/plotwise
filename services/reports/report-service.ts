@@ -102,14 +102,14 @@ export async function getAssessmentById(
 
   if (
     totalApplications >= 3 &&
-    constraints.length > 0
+    (constraints ?? []).length > 0
   ) {
     confidence = "Medium";
   }
 
   if (
     totalApplications >= 5 &&
-    constraints.length > 1
+    (constraints ?? []).length > 1
   ) {
     confidence = "High";
   }
