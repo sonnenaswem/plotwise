@@ -5,6 +5,9 @@ export const metadata: Metadata = {
   title: "PlotWise — Planning Intelligence for London",
   description:
     "Know your planning risk before you commit. Evidence-based planning risk scores for UK property developers and architects.",
+  icons: {
+    icon: "/favicon.svg",
+  },
 };
 
 export default function RootLayout({

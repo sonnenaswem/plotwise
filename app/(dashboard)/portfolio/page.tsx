@@ -141,14 +141,6 @@ export default function PortfolioPage() {
           <div style={{ height: 200 }}>
             <DoughnutChart labels={Object.keys(portfolio.typeDistribution)} values={Object.values(portfolio.typeDistribution)} />
           </div>
-          <div style={{ marginTop: 12, maxHeight: 120, overflowY: "auto" }}>
-            {Object.entries(portfolio.typeDistribution).map(([t, v]) => (
-              <div key={t} style={{ display: "flex", justifyContent: "space-between", padding: "5px 0", borderBottom: "1px solid #F8FAFC", fontSize: 12 }}>
-                <span style={{ color: "#475569" }}>{t}</span>
-                <span style={{ fontWeight: 600, color: "#0D2137" }}>{String(v)}</span>
-              </div>
-            ))}
-          </div>
         </div>
 
         {/* Bar chart */}
