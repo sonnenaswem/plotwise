@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "PlotWise — Planning Intelligence for London",
+  title: "PlotWize — Planning Intelligence for London",
   description:
     "Know your planning risk before you commit. Evidence-based planning risk scores for UK property developers and architects.",
   icons: {

@@ -66,14 +66,78 @@ const KPI_CONFIG = (stats: any) => [
 export default function DashboardPage() {
   const [stats, setStats]     = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
     const link = document.createElement("link");
     link.rel  = "stylesheet";
     link.href = "https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,600&family=Inter:wght@400;500;600&display=swap";
     document.head.appendChild(link);
-    getDashboardStats().then((r) => { setStats(r); setLoading(false); });
-  }, []);
+    getDashboardStats()
+      .then((result) => {
+        setStats(result);
+      })
+      .catch((error) => {
+        console.error("Dashboard loading failed:", error);
+
+        setErrorMessage(
+          error instanceof Error
+            ? error.message
+            : "The dashboard could not be loaded."
+        );
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+      }, []);
+
+  if (errorMessage) {
+    return (
+      <div
+        style={{
+          ...sans,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          minHeight: "60vh",
+          padding: 24,
+        }}
+      >
+        <div
+          style={{
+            width: "100%",
+            maxWidth: 520,
+            border: "1px solid #FECACA",
+            background: "#FEF2F2",
+            borderRadius: 12,
+            padding: 20,
+          }}
+        >
+          <h2
+            style={{
+              fontSize: 16,
+              fontWeight: 600,
+              color: "#991B1B",
+              margin: "0 0 6px",
+            }}
+          >
+            Dashboard could not be loaded
+          </h2>
+
+          <p
+            style={{
+              fontSize: 13,
+              lineHeight: 1.6,
+              color: "#B91C1C",
+              margin: 0,
+            }}
+          >
+            {errorMessage}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   if (loading || !stats) {
     return (
@@ -163,14 +227,11 @@ export default function DashboardPage() {
         <div className="dash-header">
           <div>
             <h1 style={{ ...serif, fontSize:28, fontWeight:300, color:"#0D2137", letterSpacing:"-0.5px", margin:"0 0 4px" }}>Dashboard</h1>
-            <p style={{ fontSize:13, color:"#94A3B8", margin:0 }}>PlotWise Planning Intelligence — Greater London</p>
+            <p style={{ fontSize:13, color:"#94A3B8", margin:0 }}>PlotWize Planning Intelligence — Greater London</p>
           </div>
           <div className="dash-actions" style={{ display:"flex", gap:10 }}>
-            <button style={{ fontSize:13, fontWeight:600, color:"#64748B", background:"#fff", border:"1px solid #E2E8F0", borderRadius:8, padding:"8px 16px", cursor:"pointer", whiteSpace:"nowrap" }}>
-              Export
-            </button>
-            <a href="/assessments" style={{ fontSize:13, fontWeight:600, color:"#0B1628", background:"#A3E635", border:"none", borderRadius:8, padding:"8px 16px", cursor:"pointer", textDecoration:"none", whiteSpace:"nowrap" }}>
-              + New Assessment
+            <a href="/projects" style={{ fontSize:13, fontWeight:600, color:"#0B1628", background:"#A3E635", border:"none", borderRadius:8, padding:"8px 16px", cursor:"pointer", textDecoration:"none", whiteSpace:"nowrap" }}>
+              + New Project
             </a>
           </div>
         </div>

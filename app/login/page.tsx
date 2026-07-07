@@ -23,13 +23,65 @@ export default function LoginPage() {
     document.body.style.padding = "0";
   }, []);
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+  async function handleSubmit(
+    event: React.FormEvent<HTMLFormElement>
+  ) {
+    event.preventDefault();
+
     setLoading(true);
     setError("");
-    const { error } = await signIn(email, password);
-    if (error) { setError(error.message); setLoading(false); return; }
-    router.push("/dashboard");
+
+    const normalizedEmail =
+      email.trim().toLowerCase();
+
+    const { error: signInError } =
+      await signIn(
+        normalizedEmail,
+        password
+      );
+
+    if (signInError) {
+      const message =
+        signInError.message.toLowerCase();
+
+      if (
+        message.includes(
+          "email not confirmed"
+        ) ||
+        message.includes(
+          "email_not_confirmed"
+        )
+      ) {
+        const verifyUrl =
+          new URL(
+            "/verify-email",
+            window.location.origin
+          );
+
+        verifyUrl.searchParams.set(
+          "email",
+          normalizedEmail
+        );
+
+        verifyUrl.searchParams.set(
+          "next",
+          "/dashboard"
+        );
+
+        router.replace(
+          `${verifyUrl.pathname}${verifyUrl.search}`
+        );
+
+        return;
+      }
+
+      setError(signInError.message);
+      setLoading(false);
+      return;
+    }
+
+    router.replace("/dashboard");
+    router.refresh();
   }
 
   const serif  = { fontFamily: "'Fraunces', Georgia, serif" };
@@ -98,7 +150,7 @@ export default function LoginPage() {
 
           <div className="login-logo-wrap">
             <Link href="/">
-              <Image src="/logo1.png" alt="PlotWise" width={160} height={100} style={{ objectFit: "contain" }} priority />
+              <Image src="/logo3.png" alt="PlotWize" width={160} height={100} style={{ objectFit: "contain" }} priority />
             </Link>
           </div>
 
@@ -180,7 +232,7 @@ export default function LoginPage() {
               </div>
 
               <p style={{ ...sans, fontSize: 13, color: "#94A3B8", textAlign: "center", margin: 0 }}>
-                New to PlotWise?{" "}
+                New to PlotWize?{" "}
                 <Link href="/signup" style={{ color: "#639922", fontWeight: 600, textDecoration: "none" }}>Create a free account</Link>
               </p>
             </div>
@@ -201,7 +253,7 @@ export default function LoginPage() {
               Know your risk before you spend a penny
             </h2>
             <p style={{ ...sans, fontSize: 15, color: "rgba(255,255,255,0.55)", lineHeight: 1.7, maxWidth: 380, margin: "0 0 48px" }}>
-              PlotWise analyses historical planning decisions, constraint data, and local authority trends so you can assess feasibility in minutes — not weeks.
+              PlotWize analyses historical planning decisions, constraint data, and local authority trends so you can assess feasibility in minutes — not weeks.
             </p>
 
             <div className="stats-col">
@@ -215,7 +267,7 @@ export default function LoginPage() {
 
             <div style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, padding: 20 }}>
               <p style={{ ...sans, fontSize: 14, color: "rgba(255,255,255,0.75)", lineHeight: 1.6, margin: "0 0 12px", fontStyle: "italic" }}>
-                &ldquo;PlotWise helped us identify a conservation area constraint that would have cost us three months and a failed application. Invaluable before site acquisition.&rdquo;
+                &ldquo;PlotWize helped us identify a conservation area constraint that would have cost us three months and a failed application. Invaluable before site acquisition.&rdquo;
               </p>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <div style={{ width: 32, height: 32, borderRadius: "50%", background: "linear-gradient(135deg, #A3E635, #3B6D11)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: "#0B1628" }}>J</div>

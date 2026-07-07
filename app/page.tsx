@@ -3,6 +3,10 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
+import {
+  BILLING_PLANS,
+  formatPlanPrice,
+} from "@/constants/billing-plans";
 
 export default function HomePage() {
   const scoreRef = useRef<HTMLSpanElement>(null);
@@ -56,9 +60,9 @@ export default function HomePage() {
   ];
 
   const steps = [
-    { n: "1", title: "Enter a property address",     body: "Search any London address. PlotWise pinpoints the exact location and borough for accurate analysis." },
+    { n: "1", title: "Enter a property address",     body: "Search any London address. PlotWize pinpoints the exact location and borough for accurate analysis." },
     { n: "2", title: "Select a project type",        body: "Tell us what you're planning — residential extension, change of use, new build — so we match the right comparable decisions." },
-    { n: "3", title: "Review planning intelligence", body: "PlotWise checks all constraints, surfaces nearby historical applications, and scores the risk across every factor." },
+    { n: "3", title: "Review planning intelligence", body: "PlotWize checks all constraints, surfaces nearby historical applications, and scores the risk across every factor." },
     { n: "4", title: "Download your report",         body: "Get a full PDF report: score, evidence, key risks, and planning recommendations — ready to share with your team or client." },
   ];
 
@@ -76,11 +80,33 @@ export default function HomePage() {
     { desc: "Side extension, 9 Talbot Rd",        outcome: "Refused",  ok: false },
   ];
 
-  const plans = [
-    { name: "Starter",      price: "Free", period: "14-day trial", featured: false, desc: "Get started with planning intelligence on a handful of sites.",   feats: ["Limited assessments","PDF reports","Constraint checks"], cta: "Start trial" },
-    { name: "Professional", price: "Pro",  period: "/ month",      featured: true,  desc: "For active developers running multiple sites at once.",           feats: ["Increased assessment limits","Organisation accounts","Team collaboration","Read-only access on cancel"], cta: "Get started" },
-    { name: "Developer",    price: "High", period: "volume",       featured: false, desc: "Unlimited assessments for firms with serious deal flow.",         feats: ["Unlimited assessments","Priority support","Custom reporting"], cta: "Talk to us" },
-  ];
+  const getPlanSignupHref = (
+    planId: string
+  ) => {
+    if (planId === "professional") {
+      return "/signup/individual?plan=professional";
+    }
+
+    if (planId === "enterprise") {
+      return "/signup/organization?plan=enterprise";
+    }
+
+    return "/signup/organization?plan=developer";
+  };
+
+  const getPlanCta = (
+    planId: string
+  ) => {
+    if (planId === "professional") {
+      return "Create individual account";
+    }
+
+    if (planId === "enterprise") {
+      return "Create enterprise account";
+    }
+
+    return "Create organization account";
+  };
 
   /* shared inner container — identical max-width & padding as hero */
   const innerCls = "max-w-[1100px] mx-auto w-full px-12";
@@ -134,7 +160,31 @@ export default function HomePage() {
           .constraint-grid { grid-template-columns: 1fr !important; }
           .score-num    { font-size: 64px !important; }
         }
+        .plan-card {
+          position: relative;
+          overflow: hidden;
+          transition:
+            transform 0.2s ease,
+            border-color 0.2s ease,
+            box-shadow 0.2s ease;
+        }
 
+        .plan-card:hover {
+          transform: translateY(-5px);
+          border-color: rgba(163, 230, 53, 0.55) !important;
+          box-shadow: 0 22px 55px rgba(0, 0, 0, 0.2);
+        }
+
+        .plan-cta {
+          transition:
+            background 0.16s ease,
+            color 0.16s ease,
+            transform 0.16s ease;
+        }
+
+        .plan-cta:hover {
+          transform: translateY(-1px);
+        }
         /* ── Mobile menu ── */
         .mobile-menu {
           display: none;
@@ -176,7 +226,7 @@ export default function HomePage() {
 
           {/* Logo + tagline */}
           <div style={{ display: "flex", alignItems: "center", gap: 0, flexShrink: 0 }}>
-            <Image src="/logo2.png" alt="PlotWise" width={150} height={90} style={{ objectFit: "contain", flexShrink: 0 }} priority />
+            <Image src="/logo2.png" alt="PlotWize" width={150} height={90} style={{ objectFit: "contain", flexShrink: 0 }} priority />
             <div style={{ display: "flex", flexDirection: "column", lineHeight: 1.3, marginLeft: -14, flexShrink: 0 }}>
               <span style={{ ...sans, fontSize: 15, fontWeight: 600, color: "#0B1628", whiteSpace: "nowrap" }}>Planning Intelligence</span>
               <span style={{ ...sans, fontSize: 15, fontWeight: 600, color: "rgba(6,94,54,0.65)", whiteSpace: "nowrap" }}>For Better Decisions</span>
@@ -234,7 +284,7 @@ export default function HomePage() {
                 {" "}before you commit
               </h1>
               <p className="hero-sub" style={{ ...sans, fontSize: 16, color: "rgba(255,255,255,0.6)", lineHeight: 1.7, maxWidth: 440, margin: "0 0 32px" }}>
-                PlotWise gives property developers and architects an evidence-based planning risk score before they spend a penny on applications, consultants, or surveys.
+                PlotWize gives property developers and architects an evidence-based planning risk score before they spend a penny on applications, consultants, or surveys.
               </p>
               <div style={{ display: "flex", alignItems: "center", gap: 24, flexWrap: "wrap" }}>
                 <Link href="/signup" style={{ ...sans, background: "#A3E635", color: "#0B1628", fontSize: 14, fontWeight: 700, padding: "13px 26px", borderRadius: 8, textDecoration: "none" }}>
@@ -296,12 +346,12 @@ export default function HomePage() {
       {/* ════ FEATURES ════ */}
       <div id="features" style={{ background: "#F8F9FA", width: "100%" }}>
         <div className={`${innerCls} inner-pad`} style={{ padding: "80px 48px" }}>
-          <p style={{ ...sans, fontSize: 11, fontWeight: 600, letterSpacing: "1.2px", textTransform: "uppercase", color: "#639922", margin: "0 0 12px" }}>Why PlotWise</p>
+          <p style={{ ...sans, fontSize: 11, fontWeight: 600, letterSpacing: "1.2px", textTransform: "uppercase", color: "#639922", margin: "0 0 12px" }}>Why PlotWize</p>
           <h2 className="section-h2" style={{ ...serif, fontSize: 40, fontWeight: 300, color: "#0B1628", letterSpacing: "-0.5px", lineHeight: 1.15, margin: "0 0 12px" }}>
             Stop spending before you know what you&apos;re buying
           </h2>
           <p style={{ ...sans, fontSize: 16, color: "#64748B", lineHeight: 1.7, maxWidth: 500, margin: "0 0 48px" }}>
-            Architects, surveys, and planning consultants cost thousands before you even submit. PlotWise surfaces the risk first.
+            Architects, surveys, and planning consultants cost thousands before you even submit. PlotWize surfaces the risk first.
           </p>
           <div className="feat-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 20 }}>
             {features.map((f) => (
@@ -326,7 +376,7 @@ export default function HomePage() {
             From address to report in minutes
           </h2>
           <p style={{ ...sans, fontSize: 16, color: "#64748B", lineHeight: 1.7, maxWidth: 420, margin: "0 0 48px" }}>
-            PlotWise runs the research so you can make the call.
+            PlotWize runs the research so you can make the call.
           </p>
           <div className="how-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 64, alignItems: "start" }}>
             <div>
@@ -384,35 +434,346 @@ export default function HomePage() {
       </div>
 
       {/* ════ PRICING ════ */}
-      <div id="pricing" style={{ background: heroBg, width: "100%", padding: "80px 0" }}>
-        <div className={`${innerCls} inner-pad`} style={{ padding: "0 48px" }}>
-          <p style={{ ...sans, fontSize: 11, fontWeight: 600, letterSpacing: "1.2px", textTransform: "uppercase", color: "#A3E635", margin: "0 0 12px" }}>Pricing</p>
-          <h2 className="section-h2" style={{ ...serif, fontSize: 40, fontWeight: 300, color: "#fff", letterSpacing: "-0.5px", lineHeight: 1.15, margin: "0 0 12px" }}>
-            Simple plans for every stage
+      <div
+        id="pricing"
+        style={{
+          width: "100%",
+          padding: "80px 0",
+          background: heroBg,
+        }}
+      >
+        <div
+          className={`${innerCls} inner-pad`}
+          style={{
+            padding: "0 48px",
+          }}
+        >
+          <p
+            style={{
+              ...sans,
+              margin: "0 0 12px",
+              color: "#A3E635",
+              fontSize: 11,
+              fontWeight: 600,
+              textTransform: "uppercase",
+              letterSpacing: "1.2px",
+            }}
+          >
+            Pricing
+          </p>
+
+          <h2
+            className="section-h2"
+            style={{
+              ...serif,
+              margin: "0 0 12px",
+              color: "#FFFFFF",
+              fontSize: 40,
+              fontWeight: 300,
+              lineHeight: 1.15,
+              letterSpacing: "-0.5px",
+            }}
+          >
+            Choose the workspace that fits your work
           </h2>
-          <p style={{ ...sans, fontSize: 16, color: "rgba(255,255,255,0.45)", lineHeight: 1.7, margin: "0 0 48px" }}>Start free. Scale as your pipeline grows.</p>
-          <div className="plan-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 20 }}>
-            {plans.map((plan) => (
-              <div key={plan.name} style={{ background: plan.featured ? "#A3E635" : "rgba(255,255,255,0.05)", border: `1px solid ${plan.featured ? "#A3E635" : "rgba(255,255,255,0.1)"}`, borderRadius: 14, padding: 24, display: "flex", flexDirection: "column", gap: 16 }}>
-                <div>
-                  <p style={{ ...sans, fontSize: 13, color: plan.featured ? "rgba(11,22,40,0.6)" : "rgba(255,255,255,0.5)", margin: "0 0 8px" }}>{plan.name}</p>
-                  <p style={{ ...serif, fontSize: 32, fontWeight: 600, color: plan.featured ? "#0B1628" : "#fff", lineHeight: 1, margin: 0 }}>
-                    {plan.price}
-                    <span style={{ ...sans, fontSize: 14, fontWeight: 400, color: plan.featured ? "rgba(11,22,40,0.5)" : "rgba(255,255,255,0.4)", marginLeft: 6 }}>{plan.period}</span>
+
+          <p
+            style={{
+              ...sans,
+              maxWidth: 600,
+              margin: "0 0 48px",
+              color: "rgba(255,255,255,0.48)",
+              fontSize: 16,
+              lineHeight: 1.7,
+            }}
+          >
+            Start with a personal workspace or bring your
+            whole development team into PlotWize.
+          </p>
+
+          <div
+            className="plan-grid"
+            style={{
+              display: "grid",
+              gridTemplateColumns:
+                "repeat(3, minmax(0, 1fr))",
+              gap: 20,
+              alignItems: "stretch",
+            }}
+          >
+            {BILLING_PLANS.map((plan) => (
+              <article
+                key={plan.id}
+                className="plan-card"
+                style={{
+                  display: "flex",
+                  minWidth: 0,
+                  flexDirection: "column",
+                  border: plan.featured
+                    ? "1px solid #A3E635"
+                    : "1px solid rgba(255,255,255,0.11)",
+                  borderRadius: 15,
+                  background: plan.featured
+                    ? "#A3E635"
+                    : "rgba(255,255,255,0.05)",
+                }}
+              >
+                {plan.featured ? (
+                  <div
+                    style={{
+                      padding: "8px 16px",
+                      background: "#D0F77C",
+                      color: "#0B1628",
+                      fontSize: 10,
+                      fontWeight: 900,
+                      textAlign: "center",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.8px",
+                    }}
+                  >
+                    Recommended for teams
+                  </div>
+                ) : null}
+
+                <div
+                  style={{
+                    display: "flex",
+                    flex: 1,
+                    flexDirection: "column",
+                    padding: 25,
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "flex-start",
+                      justifyContent: "space-between",
+                      gap: 14,
+                    }}
+                  >
+                    <div>
+                      <p
+                        style={{
+                          ...sans,
+                          margin: "0 0 7px",
+                          color: plan.featured
+                            ? "rgba(11,22,40,0.58)"
+                            : "rgba(255,255,255,0.45)",
+                          fontSize: 10,
+                          fontWeight: 800,
+                          textTransform: "uppercase",
+                          letterSpacing: "0.7px",
+                        }}
+                      >
+                        {plan.audience}
+                      </p>
+
+                      <h3
+                        style={{
+                          ...serif,
+                          margin: 0,
+                          color: plan.featured
+                            ? "#0B1628"
+                            : "#FFFFFF",
+                          fontSize: 27,
+                          fontWeight: 600,
+                        }}
+                      >
+                        {plan.name}
+                      </h3>
+                    </div>
+
+                    <span
+                      style={{
+                        display: "inline-flex",
+                        width: 42,
+                        height: 42,
+                        flexShrink: 0,
+                        alignItems: "center",
+                        justifyContent: "center",
+                        borderRadius: 11,
+                        background: plan.featured
+                          ? "rgba(11,22,40,0.1)"
+                          : "rgba(163,230,53,0.1)",
+                        color: plan.featured
+                          ? "#0B1628"
+                          : "#A3E635",
+                        fontSize: 18,
+                        fontWeight: 800,
+                      }}
+                    >
+                      {plan.id === "professional"
+                        ? "1"
+                        : plan.id === "developer"
+                          ? "5"
+                          : "15"}
+                    </span>
+                  </div>
+
+                  <p
+                    style={{
+                      ...sans,
+                      minHeight: 68,
+                      margin: "16px 0 0",
+                      color: plan.featured
+                        ? "rgba(11,22,40,0.62)"
+                        : "rgba(255,255,255,0.48)",
+                      fontSize: 13,
+                      lineHeight: 1.65,
+                    }}
+                  >
+                    {plan.description}
                   </p>
+
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "baseline",
+                      gap: 6,
+                      marginTop: 20,
+                      paddingBottom: 20,
+                      borderBottom: plan.featured
+                        ? "1px solid rgba(11,22,40,0.13)"
+                        : "1px solid rgba(255,255,255,0.09)",
+                    }}
+                  >
+                    <span
+                      style={{
+                        ...serif,
+                        color: plan.featured
+                          ? "#0B1628"
+                          : "#FFFFFF",
+                        fontSize: 38,
+                        fontWeight: 600,
+                        lineHeight: 1,
+                        letterSpacing: "-1px",
+                      }}
+                    >
+                      {formatPlanPrice(plan)}
+                    </span>
+
+                    <span
+                      style={{
+                        ...sans,
+                        color: plan.featured
+                          ? "rgba(11,22,40,0.52)"
+                          : "rgba(255,255,255,0.38)",
+                        fontSize: 12,
+                      }}
+                    >
+                      / month
+                    </span>
+                  </div>
+
+                  <ul
+                    style={{
+                      display: "grid",
+                      gap: 11,
+                      margin: "21px 0 26px",
+                      padding: 0,
+                      listStyle: "none",
+                    }}
+                  >
+                    {plan.features.map((feature) => (
+                      <li
+                        key={feature}
+                        style={{
+                          ...sans,
+                          display: "flex",
+                          alignItems: "flex-start",
+                          gap: 9,
+                          color: plan.featured
+                            ? "rgba(11,22,40,0.72)"
+                            : "rgba(255,255,255,0.64)",
+                          fontSize: 12,
+                          lineHeight: 1.5,
+                        }}
+                      >
+                        <span
+                          style={{
+                            display: "inline-flex",
+                            width: 19,
+                            height: 19,
+                            flexShrink: 0,
+                            alignItems: "center",
+                            justifyContent: "center",
+                            marginTop: 1,
+                            borderRadius: 99,
+                            background: plan.featured
+                              ? "rgba(11,22,40,0.1)"
+                              : "rgba(163,230,53,0.12)",
+                            color: plan.featured
+                              ? "#0B1628"
+                              : "#A3E635",
+                            fontSize: 12,
+                            fontWeight: 900,
+                          }}
+                        >
+                          ✓
+                        </span>
+
+                        <span>{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  <Link
+                    href={getPlanSignupHref(plan.id)}
+                    className="plan-cta"
+                    style={{
+                      ...sans,
+                      display: "flex",
+                      minHeight: 44,
+                      alignItems: "center",
+                      justifyContent: "center",
+                      marginTop: "auto",
+                      padding: "11px 14px",
+                      border: plan.featured
+                        ? "1px solid #0B1628"
+                        : "1px solid rgba(163,230,53,0.24)",
+                      borderRadius: 9,
+                      background: plan.featured
+                        ? "#0B1628"
+                        : "rgba(163,230,53,0.08)",
+                      color: plan.featured
+                        ? "#A3E635"
+                        : "#A3E635",
+                      fontSize: 12,
+                      fontWeight: 800,
+                      textAlign: "center",
+                      textDecoration: "none",
+                    }}
+                  >
+                    {getPlanCta(plan.id)}
+                  </Link>
                 </div>
-                <p style={{ ...sans, fontSize: 13, color: plan.featured ? "rgba(11,22,40,0.6)" : "rgba(255,255,255,0.45)", lineHeight: 1.55, margin: 0 }}>{plan.desc}</p>
-                <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 8 }}>
-                  {plan.feats.map((f) => (
-                    <li key={f} style={{ ...sans, display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: plan.featured ? "rgba(11,22,40,0.7)" : "rgba(255,255,255,0.6)" }}>
-                      <span style={{ color: plan.featured ? "#0B1628" : "#A3E635", fontWeight: 700 }}>✓</span> {f}
-                    </li>
-                  ))}
-                </ul>
-                <Link href="/signup" style={{ ...sans, marginTop: "auto", textAlign: "center", display: "block", background: plan.featured ? "#0B1628" : "rgba(255,255,255,0.08)", color: plan.featured ? "#A3E635" : "#fff", fontSize: 13, fontWeight: 600, padding: "11px", borderRadius: 8, textDecoration: "none" }}>{plan.cta}</Link>
-              </div>
+              </article>
             ))}
           </div>
+
+          <p
+            style={{
+              ...sans,
+              maxWidth: 780,
+              margin: "25px auto 0",
+              padding: "12px 16px",
+              border:
+                "1px solid rgba(255,255,255,0.08)",
+              borderRadius: 9,
+              background:
+                "rgba(255,255,255,0.035)",
+              color:
+                "rgba(255,255,255,0.42)",
+              fontSize: 11,
+              lineHeight: 1.6,
+              textAlign: "center",
+            }}
+          >
+            All plans include project creation,
+            planning-risk assessments and downloadable
+            reports. Usage allowances and team capacity
+            vary by plan.
+          </p>
         </div>
       </div>
 
@@ -421,7 +782,7 @@ export default function HomePage() {
         <p style={{ ...sans, fontSize: 11, fontWeight: 600, letterSpacing: "1.2px", textTransform: "uppercase", color: "#A3E635", margin: "0 0 16px" }}>Ready to assess your site?</p>
         <h2 className="cta-h2" style={{ ...serif, fontSize: 48, fontWeight: 300, color: "#fff", letterSpacing: "-1px", margin: "0 0 16px" }}>Know before you commit.</h2>
         <p style={{ ...sans, fontSize: 16, color: "rgba(255,255,255,0.45)", maxWidth: 420, margin: "0 auto 32px", lineHeight: 1.7 }}>
-          Join the developers and architects using PlotWise to front-load planning intelligence.
+          Choose the right workspace and start assessing planning opportunities with clearer evidence.
         </p>
         <Link href="/signup" style={{ ...sans, display: "inline-block", background: "#A3E635", color: "#0B1628", fontSize: 15, fontWeight: 700, padding: "14px 32px", borderRadius: 8, textDecoration: "none" }}>
           Start your free trial
@@ -432,7 +793,7 @@ export default function HomePage() {
       <div style={{ borderTop: "1px solid rgba(255,255,255,0.07)", background: navBg, width: "100%" }}>
         <div className={`${innerCls} inner-pad`} style={{ padding: "24px 48px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
           <span style={{ ...sans, fontSize: 14, fontWeight: 700, color: "rgba(12,11,11,0.25)" }}>Planning intelligence for UK property professionals.</span>
-          <span style={{ ...sans, fontSize: 14, fontWeight: 700, color: "rgba(15,14,14,0.25)" }}>© 2026 PlotWise. All rights reserved.</span>
+          <span style={{ ...sans, fontSize: 14, fontWeight: 700, color: "rgba(15,14,14,0.25)" }}>© 2026 PlotWize. All rights reserved.</span>
         </div>
       </div>
     </>

@@ -267,7 +267,7 @@ export default function TrendsPage() {
                 { icon: "📍", title: "Location is paramount", body: `Approval rates vary by up to ${best && worst ? best.approvalRate - worst.approvalRate : "—"}% between London boroughs. Borough selection is the single biggest variable in planning success.` },
                 { icon: "📊", title: "Volume signals consistency", body: "High-volume boroughs have more predictable outcomes. Boroughs with large datasets give you stronger comparable evidence for your application." },
                 { icon: "⚡", title: "Front-load your risk analysis", body: "The data shows planning constraints are the primary driver of refusals. Checking constraints before acquiring a site saves significant cost." },
-                { icon: "🔄", title: "Similar applications matter", body: "Historical decisions in the same area and project type are the strongest predictor of outcome. PlotWise surfaces these automatically." },
+                { icon: "🔄", title: "Similar applications matter", body: "Historical decisions in the same area and project type are the strongest predictor of outcome. PlotWize surfaces these automatically." },
               ].map((tip) => (
                 <div key={tip.title} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
                   <span style={{ fontSize: 20, flexShrink: 0 }}>{tip.icon}</span>

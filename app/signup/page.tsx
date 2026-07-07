@@ -1,274 +1,860 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
+import { Suspense } from "react";
 import Image from "next/image";
-import { signUp } from "@/services/auth/auth-service";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 
-export default function SignupPage() {
-  const router = useRouter();
-  const [email, setEmail]         = useState("");
-  const [password, setPassword]   = useState("");
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName]   = useState("");
-  const [loading, setLoading]     = useState(false);
-  const [error, setError]         = useState("");
-  const [showPass, setShowPass]   = useState(false);
-  const [strength, setStrength]   = useState(0);
+const serif = {
+  fontFamily: "'Fraunces', Georgia, serif",
+};
 
-  useEffect(() => {
-    const link = document.createElement("link");
-    link.rel  = "stylesheet";
-    link.href = "https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;1,9..144,300&family=Inter:wght@400;500;600&display=swap";
-    document.head.appendChild(link);
-    document.body.style.margin  = "0";
-    document.body.style.padding = "0";
-  }, []);
+const sans = {
+  fontFamily: "'Inter', system-ui, sans-serif",
+};
 
-  useEffect(() => {
-    let s = 0;
-    if (password.length >= 8)          s++;
-    if (/[A-Z]/.test(password))        s++;
-    if (/[0-9]/.test(password))        s++;
-    if (/[^A-Za-z0-9]/.test(password)) s++;
-    setStrength(s);
-  }, [password]);
+type AccountOption = {
+  id: "professional" | "developer" | "enterprise";
+  eyebrow: string;
+  title: string;
+  price: string;
+  description: string;
+  features: string[];
+  href: string;
+  linkLabel: string;
+  featured?: boolean;
+  icon: React.ReactNode;
+};
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
-    const { error } = await signUp(email, password);
-    if (error) { setError(error.message); setLoading(false); return; }
-    router.push("/dashboard");
-  }
+function IndividualIcon() {
+  return (
+    <svg
+      width="25"
+      height="25"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M20 21a8 8 0 0 0-16 0" />
+      <circle cx="12" cy="7" r="4" />
+    </svg>
+  );
+}
 
-  const serif  = { fontFamily: "'Fraunces', Georgia, serif" };
-  const sans   = { fontFamily: "'Inter', system-ui, sans-serif" };
-  const heroBg = "#0D2137";
+function OrganizationIcon() {
+  return (
+    <svg
+      width="25"
+      height="25"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <rect x="3" y="3" width="18" height="18" rx="2" />
+      <path d="M8 21V7h8v14" />
+      <path d="M8 11h8" />
+      <path d="M8 15h8" />
+      <path d="M11 7V3" />
+    </svg>
+  );
+}
 
-  const strengthColors = ["#E2E8F0","#EF4444","#F59E0B","#3B82F6","#A3E635"];
-  const strengthLabels = ["","Weak","Fair","Good","Strong"];
+function EnterpriseIcon() {
+  return (
+    <svg
+      width="25"
+      height="25"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M3 21h18" />
+      <path d="M5 21V8l7-5 7 5v13" />
+      <path d="M9 21v-5h6v5" />
+      <path d="M8 10h.01" />
+      <path d="M12 10h.01" />
+      <path d="M16 10h.01" />
+      <path d="M8 13h.01" />
+      <path d="M12 13h.01" />
+      <path d="M16 13h.01" />
+    </svg>
+  );
+}
 
-  const steps = [
-    { icon: <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#A3E635" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>, title: "Search any address", body: "Enter a London property address to get started instantly." },
-    { icon: <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#A3E635" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>, title: "Instant risk score", body: "Our engine analyses constraints and historical decisions in seconds." },
-    { icon: <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#A3E635" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>, title: "Download your report", body: "Get a full PDF with scores, evidence, and recommendations." },
+function ArrowIcon() {
+  return (
+    <svg
+      width="17"
+      height="17"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M5 12h14" />
+      <path d="m13 6 6 6-6 6" />
+    </svg>
+  );
+}
+
+function CheckIcon() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="m5 12 4 4L19 6" />
+    </svg>
+  );
+}
+
+function buildDestination(
+  pathname: string,
+  currentSearchParams: URLSearchParams,
+  plan: AccountOption["id"]
+) {
+  const params = new URLSearchParams(
+    currentSearchParams.toString()
+  );
+
+  params.set("plan", plan);
+
+  const query = params.toString();
+
+  return query
+    ? `${pathname}?${query}`
+    : pathname;
+}
+
+function SignupOptionsContent() {
+  const searchParams = useSearchParams();
+
+  const preservedParams = new URLSearchParams(
+    searchParams.toString()
+  );
+
+  const loginParams = new URLSearchParams(
+    searchParams.toString()
+  );
+
+  const loginHref = loginParams.toString()
+    ? `/login?${loginParams.toString()}`
+    : "/login";
+
+  const options: AccountOption[] = [
+    {
+      id: "professional",
+      eyebrow: "For individuals",
+      title: "Individual",
+      price: "£49/month",
+      description:
+        "For independent developers, architects and property professionals assessing their own opportunities.",
+      features: [
+        "50 projects each month",
+        "50 planning assessments",
+        "50 downloadable reports",
+        "One personal workspace",
+      ],
+      href: buildDestination(
+        "/signup/individual",
+        preservedParams,
+        "professional"
+      ),
+      linkLabel: "Create individual account",
+      icon: <IndividualIcon />,
+    },
+    {
+      id: "developer",
+      eyebrow: "For growing teams",
+      title: "Organization",
+      price: "£100/month",
+      description:
+        "For property teams that need a shared workspace, collaborative projects and controlled member access.",
+      features: [
+        "100 projects each month",
+        "100 planning assessments",
+        "100 downloadable reports",
+        "Up to 5 workspace users",
+      ],
+      href: buildDestination(
+        "/signup/organization",
+        preservedParams,
+        "developer"
+      ),
+      linkLabel: "Create organization account",
+      featured: true,
+      icon: <OrganizationIcon />,
+    },
+    {
+      id: "enterprise",
+      eyebrow: "For larger companies",
+      title: "Enterprise",
+      price: "£140/month",
+      description:
+        "For established development companies requiring greater team capacity and unrestricted planning intelligence.",
+      features: [
+        "Unlimited projects",
+        "Unlimited assessments",
+        "Unlimited report downloads",
+        "Up to 15 workspace users",
+      ],
+      href: buildDestination(
+        "/signup/organization",
+        preservedParams,
+        "enterprise"
+      ),
+      linkLabel: "Create enterprise account",
+      icon: <EnterpriseIcon />,
+    },
   ];
-
-  const inputStyle: React.CSSProperties = {
-    width: "100%", padding: "11px 13px", fontSize: 14,
-    border: "1.5px solid #E2E8F0", borderRadius: 8, outline: "none",
-    color: "#0B1628", background: "#F8FAFC", boxSizing: "border-box",
-    fontFamily: "'Inter', system-ui, sans-serif",
-  };
 
   return (
     <>
       <style>{`
-        .signup-wrap  { display: flex; min-height: 100vh; margin: 0; padding: 0; font-family: 'Inter', system-ui, sans-serif; }
-        .signup-left  { width: 42%; background: ${heroBg}; display: flex; flex-direction: column; padding: 40px 52px; position: relative; overflow: hidden; }
-        .signup-right { flex: 1; background: #fff; display: flex; flex-direction: column; padding: 0 60px; }
+        * {
+          box-sizing: border-box;
+        }
 
-        .signup-top-bar { position: absolute; top: 40px; right: 60px; font-size: 14px; color: #64748B; }
-        .signup-mobile-logo { display: none; }
-        .signup-form-area { flex: 1; display: flex; flex-direction: column; justify-content: center; padding-bottom: 48px; max-width: 420px; width: 100%; margin: 0 auto; }
-        .name-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .signup-h1 { font-size: 34px; }
-        .trust-badges { display: flex; gap: 20px; flex-wrap: wrap; }
+        html,
+        body {
+          margin: 0;
+          min-width: 320px;
+          background: #08182a;
+        }
 
-        /* ════ MOBILE — brand panel COMPLETELY removed, form gets full width and space ════ */
-        @media (max-width: 768px) {
-          .signup-wrap  { flex-direction: column; min-height: 100vh; }
-          .signup-left  { display: none !important; }   /* fully hidden — no edging, no squeeze */
-          .signup-right { padding: 0 22px; width: 100%; min-height: 100vh; }
+        .account-choice-page {
+          position: relative;
+          min-height: 100vh;
+          overflow: hidden;
+          background:
+            radial-gradient(
+              circle at 12% 18%,
+              rgba(14, 116, 144, 0.2),
+              transparent 29%
+            ),
+            radial-gradient(
+              circle at 88% 12%,
+              rgba(163, 230, 53, 0.11),
+              transparent 26%
+            ),
+            linear-gradient(
+              145deg,
+              #071421 0%,
+              #0d2137 52%,
+              #0a1a2d 100%
+            );
+          color: #ffffff;
+        }
 
-          /* Small logo at top of form on mobile since brand panel is gone */
-          .signup-mobile-logo {
-            display: flex; justify-content: center; align-items: center;
-            padding-top: 28px; padding-bottom: 8px; flex-shrink: 0;
+        .account-choice-orb {
+          position: absolute;
+          border: 1px solid rgba(163, 230, 53, 0.09);
+          border-radius: 999px;
+          pointer-events: none;
+        }
+
+        .account-choice-shell {
+          position: relative;
+          z-index: 2;
+          display: flex;
+          width: 100%;
+          min-height: 100vh;
+          flex-direction: column;
+          padding: 28px 42px 34px;
+        }
+
+        .account-choice-header {
+          display: flex;
+          width: 100%;
+          max-width: 1260px;
+          align-items: center;
+          justify-content: space-between;
+          gap: 24px;
+          margin: 0 auto;
+        }
+
+        .account-choice-logo-link {
+          display: inline-flex;
+          align-items: center;
+          text-decoration: none;
+        }
+
+        .account-choice-signin {
+          margin: 0;
+          color: rgba(255, 255, 255, 0.58);
+          font-size: 13px;
+          line-height: 1.5;
+          text-align: right;
+        }
+
+        .account-choice-signin a {
+          color: #a3e635;
+          font-weight: 700;
+          text-decoration: none;
+          transition: color 160ms ease;
+        }
+
+        .account-choice-signin a:hover {
+          color: #c6f36f;
+        }
+
+        .account-choice-main {
+          display: flex;
+          width: 100%;
+          max-width: 1260px;
+          flex: 1;
+          flex-direction: column;
+          justify-content: center;
+          margin: 0 auto;
+          padding: 52px 0 42px;
+        }
+
+        .account-choice-heading {
+          max-width: 760px;
+          margin: 0 auto 38px;
+          text-align: center;
+        }
+
+        .account-choice-eyebrow {
+          margin: 0 0 13px;
+          color: #a3e635;
+          font-size: 11px;
+          font-weight: 800;
+          text-transform: uppercase;
+          letter-spacing: 1.7px;
+        }
+
+        .account-choice-title {
+          margin: 0;
+          color: #ffffff;
+          font-size: clamp(34px, 5vw, 58px);
+          font-weight: 300;
+          line-height: 1.04;
+          letter-spacing: -1.4px;
+        }
+
+        .account-choice-intro {
+          max-width: 650px;
+          margin: 18px auto 0;
+          color: rgba(255, 255, 255, 0.58);
+          font-size: 15px;
+          line-height: 1.75;
+        }
+
+        .account-choice-grid {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 18px;
+          align-items: stretch;
+        }
+
+        .account-choice-card {
+          position: relative;
+          display: flex;
+          min-width: 0;
+          flex-direction: column;
+          overflow: hidden;
+          border: 1px solid rgba(255, 255, 255, 0.11);
+          border-radius: 18px;
+          background: rgba(255, 255, 255, 0.055);
+          box-shadow:
+            0 18px 55px rgba(0, 0, 0, 0.18),
+            inset 0 1px 0 rgba(255, 255, 255, 0.045);
+          backdrop-filter: blur(13px);
+          transition:
+            transform 190ms ease,
+            border-color 190ms ease,
+            background 190ms ease,
+            box-shadow 190ms ease;
+        }
+
+        .account-choice-card:hover {
+          transform: translateY(-5px);
+          border-color: rgba(163, 230, 53, 0.38);
+          background: rgba(255, 255, 255, 0.075);
+          box-shadow:
+            0 25px 70px rgba(0, 0, 0, 0.28),
+            0 0 0 1px rgba(163, 230, 53, 0.06);
+        }
+
+        .account-choice-card-featured {
+          border-color: rgba(163, 230, 53, 0.54);
+          background:
+            linear-gradient(
+              180deg,
+              rgba(163, 230, 53, 0.095),
+              rgba(255, 255, 255, 0.055)
+            );
+          box-shadow:
+            0 0 0 1px rgba(163, 230, 53, 0.08),
+            0 22px 65px rgba(0, 0, 0, 0.24);
+        }
+
+        .account-choice-recommended {
+          padding: 8px 16px;
+          background: #a3e635;
+          color: #0b1628;
+          font-size: 10px;
+          font-weight: 900;
+          text-align: center;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+        }
+
+        .account-choice-card-body {
+          display: flex;
+          flex: 1;
+          flex-direction: column;
+          padding: 25px;
+        }
+
+        .account-choice-card-top {
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          gap: 16px;
+        }
+
+        .account-choice-icon {
+          display: inline-flex;
+          width: 48px;
+          height: 48px;
+          flex-shrink: 0;
+          align-items: center;
+          justify-content: center;
+          border: 1px solid rgba(163, 230, 53, 0.17);
+          border-radius: 13px;
+          background: rgba(163, 230, 53, 0.1);
+          color: #a3e635;
+        }
+
+        .account-choice-audience {
+          display: inline-flex;
+          padding: 5px 9px;
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 99px;
+          background: rgba(255, 255, 255, 0.055);
+          color: rgba(255, 255, 255, 0.48);
+          font-size: 9px;
+          font-weight: 800;
+          text-transform: uppercase;
+          letter-spacing: 0.7px;
+        }
+
+        .account-choice-card h2 {
+          margin: 22px 0 6px;
+          color: #ffffff;
+          font-size: 29px;
+          font-weight: 600;
+          letter-spacing: -0.45px;
+        }
+
+        .account-choice-price {
+          margin: 0 0 16px;
+          color: #a3e635;
+          font-size: 13px;
+          font-weight: 800;
+        }
+
+        .account-choice-description {
+          min-height: 72px;
+          margin: 0;
+          color: rgba(255, 255, 255, 0.56);
+          font-size: 13px;
+          line-height: 1.7;
+        }
+
+        .account-choice-features {
+          display: grid;
+          gap: 10px;
+          margin: 22px 0 26px;
+          padding: 20px 0 0;
+          border-top: 1px solid rgba(255, 255, 255, 0.08);
+          list-style: none;
+        }
+
+        .account-choice-feature {
+          display: flex;
+          align-items: flex-start;
+          gap: 9px;
+          color: rgba(255, 255, 255, 0.72);
+          font-size: 12px;
+          line-height: 1.45;
+        }
+
+        .account-choice-check {
+          display: inline-flex;
+          width: 19px;
+          height: 19px;
+          flex-shrink: 0;
+          align-items: center;
+          justify-content: center;
+          margin-top: 1px;
+          border-radius: 99px;
+          background: rgba(163, 230, 53, 0.12);
+          color: #a3e635;
+        }
+
+        .account-choice-cta {
+          display: inline-flex;
+          width: 100%;
+          min-height: 45px;
+          align-items: center;
+          justify-content: space-between;
+          gap: 12px;
+          margin-top: auto;
+          padding: 11px 14px;
+          border: 1px solid rgba(163, 230, 53, 0.2);
+          border-radius: 9px;
+          background: rgba(163, 230, 53, 0.09);
+          color: #a3e635;
+          font-size: 12px;
+          font-weight: 800;
+          text-decoration: none;
+          transition:
+            background 160ms ease,
+            border-color 160ms ease,
+            color 160ms ease,
+            transform 160ms ease;
+        }
+
+        .account-choice-cta:hover {
+          transform: translateX(2px);
+          border-color: #a3e635;
+          background: #a3e635;
+          color: #0b1628;
+        }
+
+        .account-choice-footnote {
+          max-width: 850px;
+          margin: 24px auto 0;
+          padding: 13px 18px;
+          border: 1px solid rgba(255, 255, 255, 0.075);
+          border-radius: 10px;
+          background: rgba(255, 255, 255, 0.035);
+          color: rgba(255, 255, 255, 0.43);
+          font-size: 11px;
+          line-height: 1.6;
+          text-align: center;
+        }
+
+        @media (max-width: 1040px) {
+          .account-choice-shell {
+            padding-right: 28px;
+            padding-left: 28px;
           }
 
-          .signup-top-bar { position: static; text-align: right; padding: 14px 0 0; display: block; }
+          .account-choice-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+          }
 
-          .signup-form-area {
+          .account-choice-card:last-child {
+            grid-column: 1 / -1;
+            max-width: calc(50% - 9px);
+            width: 100%;
+            justify-self: center;
+          }
+        }
+
+        @media (max-width: 720px) {
+          .account-choice-shell {
+            padding: 20px 18px 26px;
+          }
+
+          .account-choice-header {
+            align-items: flex-start;
+          }
+
+          .account-choice-logo {
+            width: 118px;
+            height: auto;
+          }
+
+          .account-choice-signin {
+            max-width: 145px;
+            font-size: 12px;
+          }
+
+          .account-choice-main {
             justify-content: flex-start;
-            padding-top: 8px;
-            padding-bottom: 32px;
+            padding: 48px 0 24px;
           }
 
-          .name-grid { grid-template-columns: 1fr; }
-          .signup-h1 { font-size: 24px; }
+          .account-choice-heading {
+            margin-bottom: 28px;
+          }
+
+          .account-choice-title {
+            font-size: 38px;
+            letter-spacing: -0.8px;
+          }
+
+          .account-choice-intro {
+            font-size: 14px;
+          }
+
+          .account-choice-grid {
+            grid-template-columns: minmax(0, 1fr);
+          }
+
+          .account-choice-card:last-child {
+            grid-column: auto;
+            max-width: none;
+          }
+
+          .account-choice-description {
+            min-height: 0;
+          }
+        }
+
+        @media (max-width: 420px) {
+          .account-choice-shell {
+            padding-right: 14px;
+            padding-left: 14px;
+          }
+
+          .account-choice-header {
+            gap: 12px;
+          }
+
+          .account-choice-logo {
+            width: 104px;
+          }
+
+          .account-choice-signin {
+            max-width: 128px;
+            font-size: 11px;
+          }
+
+          .account-choice-main {
+            padding-top: 38px;
+          }
+
+          .account-choice-title {
+            font-size: 32px;
+          }
+
+          .account-choice-intro {
+            margin-top: 14px;
+            font-size: 13px;
+          }
+
+          .account-choice-card-body {
+            padding: 21px 18px;
+          }
+
+          .account-choice-card h2 {
+            font-size: 26px;
+          }
+
+          .account-choice-footnote {
+            padding-right: 13px;
+            padding-left: 13px;
+          }
         }
       `}</style>
 
-      <div className="signup-wrap">
+      <main
+        className="account-choice-page"
+        style={sans}
+      >
+        <div
+          className="account-choice-orb"
+          style={{
+            width: 480,
+            height: 480,
+            top: -210,
+            right: -140,
+          }}
+        />
 
-        {/* ── LEFT — Brand panel — DESKTOP ONLY (hidden entirely on mobile via CSS) ── */}
-        <div className="signup-left">
-          {[{ s:500,t:-160,r:-160,o:0.06 },{ s:320,t:-80,r:-80,o:0.09 },{ s:280,b:-100,l:-100,o:0.05 }].map((r,i) => (
-            <div key={i} style={{ position:"absolute", width:r.s, height:r.s, borderRadius:"50%", border:`1px solid rgba(163,230,53,${r.o})`, top:r.t, right:r.r, bottom:r.b, left:r.l, pointerEvents:"none" }} />
-          ))}
+        <div
+          className="account-choice-orb"
+          style={{
+            width: 310,
+            height: 310,
+            bottom: -145,
+            left: -105,
+          }}
+        />
 
-          <div style={{ position:"relative", zIndex:1, marginBottom: 32 }}>
-            <Link href="/">
-              <Image src="/logo1.png" alt="PlotWise" width={140} height={90} style={{ objectFit:"contain", filter:"brightness(10)" }} priority />
+        <div className="account-choice-shell">
+          <header className="account-choice-header">
+            <Link
+              href="/"
+              className="account-choice-logo-link"
+            >
+              <Image
+                className="account-choice-logo"
+                src="/logo3.png"
+                alt="PlotWize"
+                width={148}
+                height={72}
+                style={{
+                  objectFit: "contain",
+                }}
+                priority
+              />
             </Link>
-          </div>
 
-          <div style={{ flex:1, display:"flex", flexDirection:"column", justifyContent:"center", position:"relative", zIndex:1 }}>
-            <p style={{ ...sans, fontSize:11, fontWeight:600, letterSpacing:"1.4px", textTransform:"uppercase", color:"#A3E635", margin:"0 0 16px" }}>
-              Start for free today
-            </p>
-            <h2 style={{ ...serif, fontSize:40, fontWeight:300, color:"#fff", letterSpacing:"-0.8px", lineHeight:1.12, margin:"0 0 16px", maxWidth:360 }}>
-              Smarter planning decisions start here
-            </h2>
-            <p style={{ ...sans, fontSize:15, color:"rgba(255,255,255,0.55)", lineHeight:1.7, maxWidth:360, margin:"0 0 44px" }}>
-              Join developers and architects who assess planning risk before committing time and money.
-            </p>
-
-            <div style={{ display:"flex", flexDirection:"column", gap:24, marginBottom:48 }}>
-              {steps.map((s) => (
-                <div key={s.title} style={{ display:"flex", gap:14, alignItems:"flex-start" }}>
-                  <div style={{ width:36, height:36, borderRadius:10, background:"rgba(163,230,53,0.12)", border:"1px solid rgba(163,230,53,0.2)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
-                    {s.icon}
-                  </div>
-                  <div>
-                    <p style={{ ...sans, fontSize:14, fontWeight:600, color:"#fff", margin:"0 0 3px" }}>{s.title}</p>
-                    <p style={{ ...sans, fontSize:13, color:"rgba(255,255,255,0.5)", margin:0, lineHeight:1.5 }}>{s.body}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="trust-badges">
-              {["14-day free trial","No credit card needed","Cancel anytime"].map((b) => (
-                <div key={b} style={{ display:"flex", alignItems:"center", gap:6 }}>
-                  <span style={{ color:"#A3E635", fontWeight:700, fontSize:14 }}>✓</span>
-                  <span style={{ ...sans, fontSize:13, color:"rgba(255,255,255,0.5)" }}>{b}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* ── RIGHT — Form ── */}
-        <div className="signup-right">
-
-          {/* Mobile-only compact logo (brand panel is hidden, so this replaces it) */}
-          <div className="signup-mobile-logo">
-            <Link href="/">
-              <Image src="/logo1.png" alt="PlotWise" width={140} height={80} style={{ objectFit:"contain" }} priority />
-            </Link>
-          </div>
-
-          <div style={{ position:"relative", flex:1, display:"flex", flexDirection:"column" }}>
-            <span className="signup-top-bar">
+            <p className="account-choice-signin">
               Already have an account?{" "}
-              <Link href="/login" style={{ color:"#639922", fontWeight:600, textDecoration:"none" }}>Sign in</Link>
-            </span>
+              <Link href={loginHref}>
+                Sign in
+              </Link>
+            </p>
+          </header>
 
-            <div className="signup-form-area">
-              <p style={{ ...sans, fontSize:11, fontWeight:600, letterSpacing:"1.4px", textTransform:"uppercase", color:"#639922", margin:"0 0 12px" }}>
+          <section className="account-choice-main">
+            <div className="account-choice-heading">
+              <p className="account-choice-eyebrow">
                 Create your account
               </p>
-              <h1 className="signup-h1" style={{ ...serif, fontWeight:300, color:"#0D2137", letterSpacing:"-0.5px", lineHeight:1.15, margin:"0 0 24px" }}>
-                Start your 14-day free trial
+
+              <h1
+                className="account-choice-title"
+                style={serif}
+              >
+                How will you use PlotWize?
               </h1>
 
-              <form onSubmit={handleSubmit} style={{ display:"flex", flexDirection:"column", gap:16 }}>
-
-                <div className="name-grid">
-                  {[
-                    { label:"First name", val:firstName, set:setFirstName, ph:"James" },
-                    { label:"Last name",  val:lastName,  set:setLastName,  ph:"Smith" },
-                  ].map((f) => (
-                    <div key={f.label}>
-                      <label style={{ ...sans, display:"block", fontSize:13, fontWeight:600, color:"#374151", marginBottom:6 }}>{f.label}</label>
-                      <input
-                        type="text" placeholder={f.ph} value={f.val}
-                        onChange={(e) => f.set(e.target.value)}
-                        style={inputStyle}
-                        onFocus={(e) => (e.target.style.borderColor="#639922")}
-                        onBlur={(e)  => (e.target.style.borderColor="#E2E8F0")}
-                      />
-                    </div>
-                  ))}
-                </div>
-
-                <div>
-                  <label style={{ ...sans, display:"block", fontSize:13, fontWeight:600, color:"#374151", marginBottom:6 }}>Email address</label>
-                  <input
-                    type="email" placeholder="you@company.com" value={email} required
-                    onChange={(e) => setEmail(e.target.value)}
-                    style={inputStyle}
-                    onFocus={(e) => (e.target.style.borderColor="#639922")}
-                    onBlur={(e)  => (e.target.style.borderColor="#E2E8F0")}
-                  />
-                </div>
-
-                <div>
-                  <label style={{ ...sans, display:"block", fontSize:13, fontWeight:600, color:"#374151", marginBottom:6 }}>Password</label>
-                  <div style={{ position:"relative" }}>
-                    <input
-                      type={showPass ? "text" : "password"} placeholder="Min. 8 characters" value={password} required
-                      onChange={(e) => setPassword(e.target.value)}
-                      style={{ ...inputStyle, padding:"11px 48px 11px 13px" }}
-                      onFocus={(e) => (e.target.style.borderColor="#639922")}
-                      onBlur={(e)  => (e.target.style.borderColor="#E2E8F0")}
-                    />
-                    <button type="button" onClick={() => setShowPass(!showPass)} style={{
-                      position:"absolute", right:12, top:"50%", transform:"translateY(-50%)",
-                      background:"none", border:"none", cursor:"pointer",
-                      ...sans, fontSize:12, fontWeight:600, color:"#94A3B8", padding:0,
-                    }}>{showPass ? "Hide" : "Show"}</button>
-                  </div>
-
-                  {password.length > 0 && (
-                    <div style={{ marginTop:8 }}>
-                      <div style={{ display:"flex", gap:4 }}>
-                        {[1,2,3,4].map((i) => (
-                          <div key={i} style={{ flex:1, height:3, borderRadius:2, background: strength >= i ? strengthColors[strength] : "#E2E8F0", transition:"background 0.3s" }} />
-                        ))}
-                      </div>
-                      <p style={{ ...sans, fontSize:11, color: strength >= 3 ? "#639922" : "#94A3B8", margin:"4px 0 0", fontWeight:500 }}>
-                        {strengthLabels[strength]} password
-                      </p>
-                    </div>
-                  )}
-                </div>
-
-                {error && (
-                  <div style={{ background:"#FEF2F2", border:"1px solid #FECACA", borderRadius:8, padding:"10px 14px", display:"flex", alignItems:"center", gap:8 }}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#DC2626" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-                    </svg>
-                    <p style={{ ...sans, fontSize:13, color:"#DC2626", margin:0 }}>{error}</p>
-                  </div>
-                )}
-
-                <button type="submit" disabled={loading} style={{
-                  width:"100%", padding:"13px", fontSize:14, fontWeight:700,
-                  background: loading ? "#CBD5E1" : "#A3E635",
-                  color:"#0B1628", border:"none", borderRadius:8,
-                  cursor: loading ? "not-allowed" : "pointer", marginTop:4,
-                  fontFamily:"'Inter', system-ui, sans-serif",
-                }}>
-                  {loading ? "Creating account..." : "Create free account"}
-                </button>
-
-                <p style={{ ...sans, fontSize:12, color:"#94A3B8", textAlign:"center", margin:"4px 0 0", lineHeight:1.6 }}>
-                  By creating an account you agree to our{" "}
-                  <Link href="/terms" style={{ color:"#639922", textDecoration:"none" }}>Terms of Service</Link>
-                  {" "}and{" "}
-                  <Link href="/privacy" style={{ color:"#639922", textDecoration:"none" }}>Privacy Policy</Link>.
-                </p>
-              </form>
+              <p className="account-choice-intro">
+                Select the workspace that best
+                matches how you assess planning
+                opportunities. You can review or
+                change your plan before payments
+                are activated.
+              </p>
             </div>
-          </div>
+
+            <div className="account-choice-grid">
+              {options.map((option) => (
+                <article
+                  key={option.id}
+                  className={
+                    option.featured
+                      ? "account-choice-card account-choice-card-featured"
+                      : "account-choice-card"
+                  }
+                >
+                  {option.featured ? (
+                    <div className="account-choice-recommended">
+                      Recommended for teams
+                    </div>
+                  ) : null}
+
+                  <div className="account-choice-card-body">
+                    <div className="account-choice-card-top">
+                      <span className="account-choice-icon">
+                        {option.icon}
+                      </span>
+
+                      <span className="account-choice-audience">
+                        {option.eyebrow}
+                      </span>
+                    </div>
+
+                    <h2 style={serif}>
+                      {option.title}
+                    </h2>
+
+                    <p className="account-choice-price">
+                      {option.price}
+                    </p>
+
+                    <p className="account-choice-description">
+                      {option.description}
+                    </p>
+
+                    <ul className="account-choice-features">
+                      {option.features.map(
+                        (feature) => (
+                          <li
+                            key={feature}
+                            className="account-choice-feature"
+                          >
+                            <span className="account-choice-check">
+                              <CheckIcon />
+                            </span>
+
+                            <span>{feature}</span>
+                          </li>
+                        )
+                      )}
+                    </ul>
+
+                    <Link
+                      href={option.href}
+                      className="account-choice-cta"
+                    >
+                      <span>
+                        {option.linkLabel}
+                      </span>
+
+                      <ArrowIcon />
+                    </Link>
+                  </div>
+                </article>
+              ))}
+            </div>
+
+            <p className="account-choice-footnote">
+              All account types can create projects,
+              run planning-risk assessments and
+              generate downloadable reports. Team
+              capacity and monthly usage allowances
+              depend on the selected plan.
+            </p>
+          </section>
         </div>
-      </div>
+      </main>
     </>
+  );
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense
+      fallback={
+        <main
+          style={{
+            ...sans,
+            display: "flex",
+            minHeight: "100vh",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "#0D2137",
+            color: "rgba(255,255,255,0.65)",
+            fontSize: 14,
+          }}
+        >
+          Loading account options...
+        </main>
+      }
+    >
+      <SignupOptionsContent />
+    </Suspense>
   );
 }

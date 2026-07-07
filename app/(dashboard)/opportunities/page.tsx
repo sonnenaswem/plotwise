@@ -2,7 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { PROJECT_TYPES } from "@/constants/project-types";
-import { getOpportunityData } from "@/services/opportunities/opportunity-service";
+import {
+  getOpportunityData,
+  type OpportunityResult,
+} from "@/services/opportunities/opportunity-service";
 
 const sans  = { fontFamily: "'Inter', system-ui, sans-serif" };
 const serif = { fontFamily: "'Fraunces', Georgia, serif" };
@@ -22,9 +25,17 @@ function RateBar({ rate }: { rate: number }) {
 
 export default function OpportunitiesPage() {
   const [selectedType, setSelectedType] = useState("");
-  const [results, setResults]           = useState<any[]>([]);
-  const [loading, setLoading]           = useState(false);
-  const [hasSearched, setHasSearched]   = useState(false);
+  const [results, setResults] =
+    useState<OpportunityResult[]>([]);
+
+  const [loading, setLoading] =
+    useState(false);
+
+  const [hasSearched, setHasSearched] =
+    useState(false);
+
+  const [errorMessage, setErrorMessage] =
+    useState("");
 
   useEffect(() => {
     const link = document.createElement("link");
@@ -34,18 +45,101 @@ export default function OpportunitiesPage() {
   }, []);
 
   async function runSearch() {
-    if (!selectedType) return;
+    if (!selectedType || loading) {
+      return;
+    }
+
     setLoading(true);
-    const data = await getOpportunityData(selectedType);
-    setResults(data);
-    setLoading(false);
-    setHasSearched(true);
+    setErrorMessage("");
+    setHasSearched(false);
+
+    try {
+      const { data, error } =
+        await getOpportunityData(
+          selectedType
+        );
+
+      if (error) {
+        setResults([]);
+        setErrorMessage(error.message);
+        setHasSearched(true);
+        return;
+      }
+
+      setResults(data);
+      setHasSearched(true);
+    } catch (error) {
+      console.error(
+        "Opportunity search failed:",
+        error
+      );
+
+      setResults([]);
+
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Opportunity data could not be loaded."
+      );
+
+      setHasSearched(true);
+    } finally {
+      setLoading(false);
+    }
   }
 
   const topBorough = results[0] ?? null;
 
   return (
-    <div style={{ ...sans, maxWidth: 1100 }}>
+    <>
+      <style>{`
+        .opportunity-search-grid {
+          display: grid;
+          grid-template-columns:
+            minmax(0, 1fr) auto;
+          gap: 12px;
+          align-items: end;
+        }
+
+        .opportunity-top-card {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          gap: 24px;
+        }
+
+        .opportunity-table {
+          min-width: 760px;
+        }
+
+        @media (max-width: 680px) {
+          .opportunity-search-grid {
+            grid-template-columns:
+              minmax(0, 1fr);
+          }
+
+          .opportunity-search-button {
+            width: 100%;
+          }
+
+          .opportunity-top-card {
+            flex-direction: column;
+          }
+
+          .opportunity-top-score {
+            padding-left: 0 !important;
+            text-align: left !important;
+          }
+        }
+      `}</style>
+
+      <div
+        style={{
+          ...sans,
+          width: "100%",
+          maxWidth: 1100,
+        }}
+      >
 
       {/* Header */}
       <div style={{ marginBottom: 28 }}>
@@ -59,7 +153,7 @@ export default function OpportunitiesPage() {
         <h2 style={{ ...serif, fontSize: 22, fontWeight: 300, color: "#fff", letterSpacing: "-0.3px", margin: "0 0 20px" }}>
           Which London boroughs have the highest approval rates for your project type?
         </h2>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 12, alignItems: "flex-end" }}>
+        <div className="opportunity-search-grid">
           <div>
             <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.5)", marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.5px" }}>
               Select project type
@@ -72,7 +166,7 @@ export default function OpportunitiesPage() {
               {PROJECT_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
             </select>
           </div>
-          <button onClick={runSearch} disabled={!selectedType || loading} style={{
+          <button className="opportunity-search-button" onClick={runSearch} disabled={!selectedType || loading} style={{
             fontSize: 14, fontWeight: 700, padding: "12px 24px",
             background: (!selectedType || loading) ? "rgba(255,255,255,0.2)" : "#A3E635",
             color: (!selectedType || loading) ? "rgba(255,255,255,0.5)" : "#0B1628",
@@ -91,11 +185,95 @@ export default function OpportunitiesPage() {
           <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
         </div>
       )}
+      {!loading && errorMessage ? (
+        <div
+          role="alert"
+          style={{
+            marginBottom: 20,
+            padding: "14px 16px",
+            border: "1px solid #FECACA",
+            borderRadius: 10,
+            background: "#FEF2F2",
+            color: "#B91C1C",
+            fontSize: 13,
+            lineHeight: 1.6,
+          }}
+        >
+          {errorMessage}
+        </div>
+      ) : null}
+
+      {!loading &&
+      hasSearched &&
+      results.length > 0 ? (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "flex-start",
+            gap: 10,
+            marginBottom: 20,
+            padding: "13px 15px",
+            border: "1px solid #BAE6FD",
+            borderRadius: 10,
+            background: "#F0F9FF",
+            color: "#0C4A6E",
+          }}
+        >
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            style={{
+              flexShrink: 0,
+              marginTop: 2,
+            }}
+            aria-hidden="true"
+          >
+            <circle cx="12" cy="12" r="10" />
+            <path d="M12 16v-4" />
+            <path d="M12 8h.01" />
+          </svg>
+
+          <div>
+            <p
+              style={{
+                margin: "0 0 3px",
+                fontSize: 12,
+                fontWeight: 750,
+              }}
+            >
+              Demonstration opportunity data
+            </p>
+
+            <p
+              style={{
+                margin: 0,
+                fontSize: 11,
+                lineHeight: 1.55,
+                color: "#0369A1",
+              }}
+            >
+              These rankings currently demonstrate
+              the Opportunity Finder workflow and
+              are not verified historical planning
+              statistics. Production rankings will
+              be calculated from classified Planning
+              London Datahub application records.
+            </p>
+          </div>
+        </div>
+        
+      ) : null}
 
       {/* Top recommendation */}
       {!loading && topBorough && (
         <div style={{ background: "#fff", border: "2px solid #A3E635", borderRadius: 14, padding: "22px 24px", marginBottom: 20, boxShadow: "0 4px 16px rgba(163,230,53,0.12)" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+          <div className="opportunity-top-card">
             <div>
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
                 <span style={{ fontSize: 11, fontWeight: 700, color: "#3B6D11", background: "#EAF3DE", padding: "3px 10px", borderRadius: 99 }}>⭐ Top recommendation</span>
@@ -109,7 +287,14 @@ export default function OpportunitiesPage() {
                 This borough has the highest historical approval rate for {selectedType} projects in Greater London.
               </p>
             </div>
-            <div style={{ textAlign: "center", flexShrink: 0, paddingLeft: 24 }}>
+            <div
+              className="opportunity-top-score"
+              style={{
+                textAlign: "center",
+                flexShrink: 0,
+                paddingLeft: 24,
+              }}
+            >
               <p style={{ ...serif, fontSize: 48, fontWeight: 700, color: "#A3E635", margin: "0 0 2px", lineHeight: 1 }}>{topBorough.approvalRate}%</p>
               <p style={{ fontSize: 12, color: "#64748B", margin: 0 }}>approval rate</p>
             </div>
@@ -119,38 +304,168 @@ export default function OpportunitiesPage() {
 
       {/* Results table */}
       {!loading && hasSearched && results.length > 0 && (
-        <div style={{ background: "#fff", border: "1px solid #E8EDF2", borderRadius: 14, overflow: "hidden", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
+        <div
+          style={{
+            overflow: "hidden",
+            border: "1px solid #E8EDF2",
+            borderRadius: 14,
+            background: "#FFFFFF",
+            boxShadow:
+              "0 1px 3px rgba(0,0,0,0.04)",
+          }}
+        >
           <div style={{ padding: "16px 24px", borderBottom: "1px solid #F1F5F9" }}>
             <h2 style={{ fontSize: 14, fontWeight: 600, color: "#0D2137", margin: "0 0 2px" }}>All Boroughs — {selectedType}</h2>
             <p style={{ fontSize: 12, color: "#94A3B8", margin: 0 }}>Ranked by historical approval rate</p>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "32px 2fr 80px 80px 80px 1fr", padding: "10px 24px", background: "#FAFBFC", fontSize: 10, fontWeight: 700, letterSpacing: "0.8px", textTransform: "uppercase", color: "#94A3B8", borderBottom: "1px solid #F1F5F9" }}>
-            <span>#</span><span>Borough</span><span>Total</span><span>Approved</span><span>Refused</span><span>Approval rate</span>
-          </div>
-
-          {results.map((b, i) => (
-            <div key={b.borough} style={{
-              display: "grid", gridTemplateColumns: "32px 2fr 80px 80px 80px 1fr",
-              padding: "14px 24px", alignItems: "center",
-              borderBottom: i < results.length - 1 ? "1px solid #F8FAFC" : "none",
-              background: i === 0 ? "rgba(163,230,53,0.03)" : "transparent",
-              transition: "background 0.15s",
+          <div
+            style={{
+              width: "100%",
+              overflowX: "auto",
             }}
-              onMouseEnter={(e) => { if (i !== 0) e.currentTarget.style.background = "#FAFBFC"; }}
-              onMouseLeave={(e) => { if (i !== 0) e.currentTarget.style.background = "transparent"; }}
-            >
-              <span style={{ fontSize: 11, fontWeight: 700, color: i === 0 ? "#639922" : "#CBD5E1" }}>#{i + 1}</span>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <span style={{ fontSize: 13, fontWeight: i === 0 ? 700 : 500, color: "#0D2137" }}>{b.borough}</span>
-                {i === 0 && <span style={{ fontSize: 10, fontWeight: 700, color: "#639922", background: "#EAF3DE", padding: "2px 7px", borderRadius: 99 }}>BEST</span>}
+          >
+            <div className="opportunity-table">
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns:
+                    "32px 2fr 80px 80px 80px 1fr",
+                  padding: "10px 24px",
+                  background: "#FAFBFC",
+                  fontSize: 10,
+                  fontWeight: 700,
+                  letterSpacing: "0.8px",
+                  textTransform: "uppercase",
+                  color: "#94A3B8",
+                  borderBottom:
+                    "1px solid #F1F5F9",
+                }}
+              >
+                <span>#</span>
+                <span>Borough</span>
+                <span>Total</span>
+                <span>Approved</span>
+                <span>Refused</span>
+                <span>Approval rate</span>
               </div>
-              <span style={{ fontSize: 13, color: "#475569" }}>{b.total}</span>
-              <span style={{ fontSize: 13, color: "#16A34A", fontWeight: 500 }}>{b.approved}</span>
-              <span style={{ fontSize: 13, color: "#DC2626", fontWeight: 500 }}>{b.refused}</span>
-              <RateBar rate={b.approvalRate} />
+
+              {results.map((b, i) => (
+                <div
+                  key={b.borough}
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns:
+                      "32px 2fr 80px 80px 80px 1fr",
+                    padding: "14px 24px",
+                    alignItems: "center",
+                    borderBottom:
+                      i < results.length - 1
+                        ? "1px solid #F8FAFC"
+                        : "none",
+                    background:
+                      i === 0
+                        ? "rgba(163,230,53,0.03)"
+                        : "transparent",
+                    transition:
+                      "background 0.15s",
+                  }}
+                  onMouseEnter={(event) => {
+                    if (i !== 0) {
+                      event.currentTarget.style.background =
+                        "#FAFBFC";
+                    }
+                  }}
+                  onMouseLeave={(event) => {
+                    if (i !== 0) {
+                      event.currentTarget.style.background =
+                        "transparent";
+                    }
+                  }}
+                >
+                  <span
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 700,
+                      color:
+                        i === 0
+                          ? "#639922"
+                          : "#CBD5E1",
+                    }}
+                  >
+                    #{i + 1}
+                  </span>
+
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontSize: 13,
+                        fontWeight:
+                          i === 0 ? 700 : 500,
+                        color: "#0D2137",
+                      }}
+                    >
+                      {b.borough}
+                    </span>
+
+                    {i === 0 ? (
+                      <span
+                        style={{
+                          padding: "2px 7px",
+                          borderRadius: 99,
+                          background: "#EAF3DE",
+                          color: "#639922",
+                          fontSize: 10,
+                          fontWeight: 700,
+                        }}
+                      >
+                        BEST
+                      </span>
+                    ) : null}
+                  </div>
+
+                  <span
+                    style={{
+                      fontSize: 13,
+                      color: "#475569",
+                    }}
+                  >
+                    {b.total}
+                  </span>
+
+                  <span
+                    style={{
+                      fontSize: 13,
+                      color: "#16A34A",
+                      fontWeight: 500,
+                    }}
+                  >
+                    {b.approved}
+                  </span>
+
+                  <span
+                    style={{
+                      fontSize: 13,
+                      color: "#DC2626",
+                      fontWeight: 500,
+                    }}
+                  >
+                    {b.refused}
+                  </span>
+
+                  <RateBar
+                    rate={b.approvalRate}
+                  />
+                </div>
+              ))}
             </div>
-          ))}
+          </div>
         </div>
       )}
 
@@ -174,6 +489,7 @@ export default function OpportunitiesPage() {
           <p style={{ fontSize: 13, color: "#94A3B8", margin: 0 }}>We&apos;ll rank all London boroughs by historical approval rate for your chosen project type.</p>
         </div>
       )}
-    </div>
+      </div>
+  </>
   );
 }

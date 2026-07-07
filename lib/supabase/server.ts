@@ -9,8 +9,36 @@ export async function createClient() {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value;
+        getAll() {
+          return cookieStore.getAll();
+        },
+
+        setAll(
+          cookiesToSet: Array<{
+            name: string;
+            value: string;
+            options?: Parameters<
+              typeof cookieStore.set
+            >[2];
+          }>
+        ) {
+          try {
+            cookiesToSet.forEach(
+              ({ name, value, options }) => {
+                cookieStore.set(
+                  name,
+                  value,
+                  options
+                );
+              }
+            );
+          } catch {
+            /*
+             * Cookie writes can fail when this client is called from
+             * a Server Component. The authentication proxy/middleware
+             * can refresh those cookies separately.
+             */
+          }
         },
       },
     }

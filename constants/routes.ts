@@ -8,5 +8,5 @@ export const ROUTES = {
   PROJECTS: "/dashboard/projects",
   ASSESSMENTS: "/dashboard/assessments",
   REPORTS: "/dashboard/reports",
-  BILLING: "/dashboard/billing",
+  BILLING: "/billing",
 };

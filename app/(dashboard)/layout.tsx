@@ -3,198 +3,841 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import {
+  useEffect,
+  useState,
+  type ReactNode,
+} from "react";
+
+import {
+  getCurrentAccountProfile,
+  type CurrentAccountProfile,
+} from "@/services/account/account-service";
+
+import {
+  getCurrentBillingOverview,
+  type BillingOverview,
+} from "@/services/billing/billing-service";
 
 const heroBg = "#0D2137";
 
-const navItems = [
+type NavLinkItem = {
+  href: string;
+  label: string;
+  icon: ReactNode;
+};
+
+type NavGroup = {
+  group: string;
+  links: NavLinkItem[];
+};
+
+const navItems: NavGroup[] = [
   {
     group: "Overview",
-    links: [{ href: "/dashboard",      label: "Dashboard",              icon: <GridIcon /> }],
+    links: [
+      {
+        href: "/dashboard",
+        label: "Dashboard",
+        icon: <GridIcon />,
+      },
+    ],
   },
   {
     group: "Portfolio",
-    links: [{ href: "/portfolio",      label: "Portfolio Analytics",    icon: <PieChartIcon /> }],
+    links: [
+      {
+        href: "/portfolio",
+        label: "Portfolio Analytics",
+        icon: <PieChartIcon />,
+      },
+    ],
   },
   {
     group: "Work",
     links: [
-      { href: "/projects",             label: "Projects",               icon: <FolderIcon /> },
-      { href: "/assessments",          label: "Assessments",            icon: <ClipboardIcon /> },
-      { href: "/reports",              label: "Reports",                icon: <FileTextIcon /> },
+      {
+        href: "/projects",
+        label: "Projects",
+        icon: <FolderIcon />,
+      },
+      {
+        href: "/assessments",
+        label: "Assessments",
+        icon: <ClipboardIcon />,
+      },
+      {
+        href: "/reports",
+        label: "Reports",
+        icon: <FileTextIcon />,
+      },
     ],
   },
   {
     group: "Intelligence",
     links: [
-      { href: "/boroughs",             label: "Borough Intelligence",   icon: <MapIcon /> },
-      { href: "/boroughs/types",       label: "Project Type Intel",     icon: <BarChartIcon /> },
-      { href: "/trends",               label: "Planning Trends",        icon: <TrendIcon /> },
-      { href: "/opportunities",        label: "Opportunity Finder",     icon: <SearchIcon /> },
+      {
+        href: "/boroughs",
+        label: "Borough Intelligence",
+        icon: <MapIcon />,
+      },
+      {
+        href: "/boroughs/types",
+        label: "Project Type Intel",
+        icon: <BarChartIcon />,
+      },
+      {
+        href: "/trends",
+        label: "Planning Trends",
+        icon: <TrendIcon />,
+      },
+      {
+        href: "/opportunities",
+        label: "Opportunity Finder",
+        icon: <SearchIcon />,
+      },
     ],
   },
   {
     group: "Account",
     links: [
-      { href: "/billing",              label: "Billing",                icon: <CreditCardIcon /> },
-      { href: "/settings",             label: "Settings",               icon: <SettingsIcon /> },
-      { href: "/api/logout",           label: "Log out",                icon: <LogoutIcon /> },
+      {
+        href: "/billing",
+        label: "Billing",
+        icon: <CreditCardIcon />,
+      },
+      {
+        href: "/settings",
+        label: "Settings",
+        icon: <SettingsIcon />,
+      },
+      {
+        href: "/api/logout",
+        label: "Log out",
+        icon: <LogoutIcon />,
+      },
     ],
   },
 ];
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const pathname   = usePathname();
-  const [open, setOpen] = useState(false);   // mobile drawer
+function SidebarContent({
+  pathname,
+  compact,
+  onNavigate,
+  profile,
+  billing,
+}: {
+  pathname: string;
+  compact: boolean;
+  onNavigate: () => void;
+  profile: CurrentAccountProfile | null;
+  billing: BillingOverview | null;
+}) {
+  const accountName =
+    profile?.fullName || "Your account";
 
-  const SidebarContent = () => (
+  const accountInitials =
+    profile?.initials || "U";
+
+  const planName = billing
+    ? billing.isTrialing
+      ? `${billing.planName} · ${billing.trialDaysRemaining}d trial`
+      : billing.planName
+    : "Loading plan";
+
+  return (
     <>
-      {/* Logo */}
-      <div style={{ display:"flex", justifyContent:"center", alignItems:"center", padding:"22px 16px 18px", borderBottom:"1px solid rgba(255,255,255,0.07)", flexShrink:0 }}>
-        <Link href="/dashboard" onClick={() => setOpen(false)}>
-          <Image src="/logo3.png" alt="PlotWise" width={180} height={120} style={{ objectFit:"contain" }} priority />
+      <div
+        className="dash-sidebar-logo"
+        style={{
+          display: "flex",
+          minHeight: 84,
+          alignItems: "center",
+          justifyContent: "center",
+          padding: compact
+            ? "18px 10px"
+            : "18px 16px",
+          borderBottom:
+            "1px solid rgba(255,255,255,0.07)",
+          flexShrink: 0,
+        }}
+      >
+        <Link
+          href="/dashboard"
+          onClick={onNavigate}
+          aria-label="PlotWize dashboard"
+        >
+          <Image
+            src="/logo4.png"
+            alt="PlotWize"
+            width={compact ? 46 : 180}
+            height={compact ? 46 : 90}
+            style={{
+              display: "block",
+              objectFit: "contain",
+            }}
+            priority
+          />
         </Link>
       </div>
 
-      {/* Scrollable nav */}
-      <nav style={{ flex:1, padding:"14px 10px", overflowY:"auto", scrollbarWidth:"none" }}>
-        <style>{`nav::-webkit-scrollbar{display:none}`}</style>
+      <nav
+        className="dash-sidebar-nav"
+        style={{
+          flex: 1,
+          padding: compact
+            ? "14px 8px"
+            : "14px 10px",
+          overflowY: "auto",
+          scrollbarWidth: "none",
+        }}
+      >
         {navItems.map((group) => (
-          <div key={group.group} style={{ marginBottom:14 }}>
-            <p style={{ fontSize:10, fontWeight:700, letterSpacing:"1.2px", textTransform:"uppercase", color:"rgba(255,255,255,0.25)", margin:"0 8px 7px", padding:0 }}>
-              {group.group}
-            </p>
-            {group.links.map(({ href, label, icon }) => {
-              const active = pathname === href || (href !== "/dashboard" && pathname?.startsWith(href));
-              return (
-                <Link key={href} href={href} onClick={() => setOpen(false)} style={{
-                  display:"flex", alignItems:"center", gap:10,
-                  padding:"8px 10px", borderRadius:8, marginBottom:2,
-                  textDecoration:"none",
-                  background: active ? "rgba(163,230,53,0.1)" : "transparent",
-                  color: active ? "#A3E635" : "rgba(255,255,255,0.55)",
-                  fontSize:13, fontWeight: active ? 600 : 400,
-                  borderLeft: active ? "2px solid #A3E635" : "2px solid transparent",
-                  transition:"background 0.15s, color 0.15s",
-                }}>
-                  <span style={{ opacity: active ? 1 : 0.6, flexShrink:0 }}>{icon}</span>
-                  {label}
-                </Link>
-              );
-            })}
+          <div
+            key={group.group}
+            style={{
+              marginBottom: 14,
+            }}
+          >
+            {!compact ? (
+              <p
+                style={{
+                  margin: "0 8px 7px",
+                  padding: 0,
+                  color:
+                    "rgba(255,255,255,0.25)",
+                  fontSize: 10,
+                  fontWeight: 700,
+                  textTransform: "uppercase",
+                  letterSpacing: "1.2px",
+                }}
+              >
+                {group.group}
+              </p>
+            ) : null}
+
+            {group.links.map(
+              ({ href, label, icon }) => {
+                const active =
+                  pathname === href;
+
+                return (
+                  <Link
+                    key={href}
+                    href={href}
+                    title={
+                      compact
+                        ? label
+                        : undefined
+                    }
+                    onClick={onNavigate}
+                    style={{
+                      display: "flex",
+                      minHeight: 38,
+                      alignItems: "center",
+                      justifyContent:
+                        compact
+                          ? "center"
+                          : "flex-start",
+                      gap: 10,
+                      marginBottom: 2,
+                      padding: compact
+                        ? "9px"
+                        : "8px 10px",
+                      borderLeft: active
+                        ? "2px solid #A3E635"
+                        : "2px solid transparent",
+                      borderRadius: 8,
+                      background: active
+                        ? "rgba(163,230,53,0.1)"
+                        : "transparent",
+                      color: active
+                        ? "#A3E635"
+                        : "rgba(255,255,255,0.55)",
+                      fontSize: 13,
+                      fontWeight: active
+                        ? 600
+                        : 400,
+                      textDecoration: "none",
+                      transition:
+                        "background 0.15s, color 0.15s",
+                    }}
+                  >
+                    <span
+                      style={{
+                        display:
+                          "inline-flex",
+                        flexShrink: 0,
+                        opacity: active
+                          ? 1
+                          : 0.6,
+                      }}
+                    >
+                      {icon}
+                    </span>
+
+                    {!compact ? (
+                      <span>{label}</span>
+                    ) : null}
+                  </Link>
+                );
+              }
+            )}
           </div>
         ))}
       </nav>
 
-      {/* Bottom */}
-      <div style={{ padding:"14px 18px", borderTop:"1px solid rgba(255,255,255,0.07)", flexShrink:0 }}>
-        <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-          <div style={{ width:30, height:30, borderRadius:"50%", background:"linear-gradient(135deg, #A3E635, #3B6D11)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:12, fontWeight:700, color:"#0B1628", flexShrink:0 }}>U</div>
-          <div style={{ minWidth:0 }}>
-            <p style={{ fontSize:12, fontWeight:600, color:"rgba(255,255,255,0.85)", margin:0, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>Your account</p>
-            <p style={{ fontSize:11, color:"rgba(255,255,255,0.35)", margin:0 }}>Starter plan</p>
+      <div
+        style={{
+          padding: compact
+            ? "12px 8px"
+            : "14px 12px",
+          borderTop:
+            "1px solid rgba(255,255,255,0.07)",
+          flexShrink: 0,
+        }}
+      >
+        <Link
+          href="/profile"
+          onClick={onNavigate}
+          title={
+            compact
+              ? `${accountName} — ${planName}`
+              : undefined
+          }
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: compact
+              ? "center"
+              : "flex-start",
+            gap: 10,
+            padding: compact
+              ? 6
+              : "8px 7px",
+            borderRadius: 9,
+            color: "inherit",
+            textDecoration: "none",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              width: 34,
+              height: 34,
+              flexShrink: 0,
+              alignItems: "center",
+              justifyContent: "center",
+              borderRadius: "50%",
+              background:
+                "linear-gradient(135deg, #A3E635, #3B6D11)",
+              color: "#0B1628",
+              fontSize: 12,
+              fontWeight: 800,
+              letterSpacing: "0.4px",
+            }}
+          >
+            {accountInitials}
           </div>
-        </div>
+
+          {!compact ? (
+            <div
+              style={{
+                minWidth: 0,
+                flex: 1,
+              }}
+            >
+              <p
+                style={{
+                  margin: 0,
+                  overflow: "hidden",
+                  color:
+                    "rgba(255,255,255,0.88)",
+                  fontSize: 12,
+                  fontWeight: 600,
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {accountName}
+              </p>
+
+              <p
+                style={{
+                  margin: 0,
+                  color:
+                    "rgba(255,255,255,0.38)",
+                  fontSize: 11,
+                  textTransform: "capitalize",
+                }}
+              >
+                {planName}
+              </p>
+            </div>
+          ) : null}
+        </Link>
       </div>
     </>
   );
+}
+
+export default function DashboardLayout({
+  children,
+}: {
+  children: ReactNode;
+}) {
+  const pathname =
+    usePathname() || "/dashboard";
+
+  const [open, setOpen] =
+    useState(false);
+
+  const [collapsed, setCollapsed] =
+    useState(false);
+
+  const [profile, setProfile] =
+    useState<CurrentAccountProfile | null>(
+      null
+    );
+
+  const [billing, setBilling] =
+    useState<BillingOverview | null>(
+      null
+    );
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadAccount() {
+      const [
+        profileResult,
+        billingResult,
+      ] = await Promise.all([
+        getCurrentAccountProfile(),
+        getCurrentBillingOverview(),
+      ]);
+
+      if (!active) {
+        return;
+      }
+
+      if (!profileResult.error) {
+        setProfile(profileResult.data);
+      }
+
+      if (!billingResult.error) {
+        setBilling(billingResult.data);
+      }
+    }
+
+    void loadAccount();
+
+    return () => {
+      active = false;
+    };
+  }, [pathname]);
+
+  useEffect(() => {
+    setOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    function handleKeyDown(
+      event: KeyboardEvent
+    ) {
+      if (event.key === "Escape") {
+        setOpen(false);
+      }
+    }
+
+    document.body.style.overflow =
+      "hidden";
+
+    window.addEventListener(
+      "keydown",
+      handleKeyDown
+    );
+
+    return () => {
+      document.body.style.overflow =
+        "";
+
+      window.removeEventListener(
+        "keydown",
+        handleKeyDown
+      );
+    };
+  }, [open]);
 
   return (
     <>
       <style>{`
-        /* Sidebar hover highlight */
-        .dash-sidebar a:hover { background: rgba(255,255,255,0.06) !important; color: rgba(255,255,255,0.85) !important; }
-
-        /* Desktop: fixed sidebar */
-        .dash-sidebar-desktop {
-          width: 232px; flex-shrink: 0; background: ${heroBg};
-          display: flex; flex-direction: column;
-          border-right: 1px solid rgba(255,255,255,0.07);
-          position: fixed; top: 0; left: 0; height: 100vh;
-          z-index: 40;
+        .dash-shell {
+          --dash-sidebar-width: 232px;
         }
 
-        /* Mobile: hidden by default */
-        .dash-sidebar-mobile {
+        .dash-shell.sidebar-collapsed {
+          --dash-sidebar-width: 76px;
+        }
+
+        .dash-sidebar a:hover {
+          background: rgba(255,255,255,0.06) !important;
+          color: rgba(255,255,255,0.85) !important;
+        }
+
+        .dash-sidebar-nav::-webkit-scrollbar {
           display: none;
-          position: fixed; top: 0; left: 0; height: 100vh; width: 240px;
-          background: ${heroBg}; flex-direction: column;
-          border-right: 1px solid rgba(255,255,255,0.07);
-          z-index: 50; transform: translateX(-100%);
-          transition: transform 0.28s cubic-bezier(0.4,0,0.2,1);
         }
-        .dash-sidebar-mobile.open { transform: translateX(0); }
 
-        /* Overlay */
+        .dash-sidebar-desktop {
+          position: fixed;
+          top: 0;
+          left: 0;
+          z-index: 40;
+          display: flex;
+          width: var(--dash-sidebar-width);
+          height: 100vh;
+          flex-direction: column;
+          border-right:
+            1px solid rgba(255,255,255,0.07);
+          background: ${heroBg};
+          transition: width 180ms ease;
+        }
+
+        .dash-collapse-button {
+          position: fixed;
+          top: 16px;
+          left: calc(
+            var(--dash-sidebar-width) - 15px
+          );
+          z-index: 44;
+          display: inline-flex;
+          width: 30px;
+          height: 30px;
+          align-items: center;
+          justify-content: center;
+          border:
+            1px solid rgba(255,255,255,0.12);
+          border-radius: 999px;
+          background: #17304B;
+          color: #FFFFFF;
+          cursor: pointer;
+          box-shadow:
+            0 4px 12px rgba(0,0,0,0.18);
+          transition:
+            left 180ms ease,
+            transform 180ms ease;
+        }
+
+        .dash-collapse-button:hover {
+          background: #213D59;
+        }
+
+        .dash-sidebar-mobile {
+          position: fixed;
+          top: 0;
+          left: 0;
+          z-index: 50;
+          display: none;
+          width: 260px;
+          height: 100dvh;
+          flex-direction: column;
+          border-right:
+            1px solid rgba(255,255,255,0.07);
+          background: ${heroBg};
+          transform: translateX(-100%);
+          transition:
+            transform 0.28s
+            cubic-bezier(0.4,0,0.2,1);
+        }
+
+        .dash-sidebar-mobile.open {
+          transform: translateX(0);
+        }
+
         .dash-overlay {
-          display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5);
-          z-index: 45; opacity: 0; transition: opacity 0.25s;
+          position: fixed;
+          inset: 0;
+          z-index: 45;
+          display: none;
+          background: rgba(0,0,0,0.52);
+          opacity: 0;
+          pointer-events: none;
+          transition: opacity 0.25s;
         }
-        .dash-overlay.open { opacity: 1; }
 
-        /* Mobile top bar */
-        .dash-mobile-bar { display: none; }
+        .dash-overlay.open {
+          opacity: 1;
+          pointer-events: auto;
+        }
 
-        /* Main content offset */
-        .dash-main { margin-left: 232px; }
+        .dash-mobile-bar {
+          display: none;
+        }
 
-        @media (max-width: 768px) {
-          .dash-sidebar-desktop { display: none; }
-          .dash-sidebar-mobile  { display: flex; }
-          .dash-overlay         { display: block; }
-          .dash-mobile-bar      { display: flex; }
-          .dash-main            { margin-left: 0; }
+        .dash-main {
+          min-width: 0;
+          margin-left:
+            var(--dash-sidebar-width);
+          transition: margin-left 180ms ease;
+        }
+
+        .dash-page-content {
+          flex: 1;
+          width: 100%;
+          max-width: 100%;
+          padding: 28px;
+          overflow-x: hidden;
+          box-sizing: border-box;
+        }
+
+        @media (max-width: 900px) {
+          .dash-sidebar-desktop,
+          .dash-collapse-button {
+            display: none;
+          }
+
+          .dash-sidebar-mobile {
+            display: flex;
+          }
+
+          .dash-overlay {
+            display: block;
+          }
+
+          .dash-mobile-bar {
+            display: flex;
+          }
+
+          .dash-main {
+            margin-left: 0;
+          }
+        }
+
+        @media (max-width: 640px) {
+          .dash-page-content {
+            padding: 20px 16px;
+          }
+
+          .dash-mobile-new-project {
+            padding: 7px 9px !important;
+            font-size: 11px !important;
+          }
+        }
+
+        @media (max-width: 390px) {
+          .dash-mobile-logo {
+            width: 84px !important;
+          }
+
+          .dash-mobile-new-project {
+            font-size: 0 !important;
+          }
+
+          .dash-mobile-new-project::after {
+            content: "+";
+            font-size: 18px;
+          }
         }
       `}</style>
 
-      <div style={{ display:"flex", minHeight:"100vh", background:"#F1F5F9", fontFamily:"'Inter', system-ui, sans-serif" }}>
-
-        {/* ── Desktop sidebar ── */}
+      <div
+        className={
+          collapsed
+            ? "dash-shell sidebar-collapsed"
+            : "dash-shell"
+        }
+        style={{
+          display: "flex",
+          minHeight: "100vh",
+          background: "#F1F5F9",
+          fontFamily:
+            "'Inter', system-ui, sans-serif",
+        }}
+      >
         <aside className="dash-sidebar dash-sidebar-desktop">
-          <SidebarContent />
+          <SidebarContent
+            pathname={pathname}
+            compact={collapsed}
+            onNavigate={() => undefined}
+            profile={profile}
+            billing={billing}
+          />
         </aside>
 
-        {/* ── Mobile overlay ── */}
-        <div className={`dash-overlay${open ? " open" : ""}`} onClick={() => setOpen(false)} />
+        <button
+          type="button"
+          className="dash-collapse-button"
+          onClick={() =>
+            setCollapsed(
+              (current) => !current
+            )
+          }
+          aria-label={
+            collapsed
+              ? "Expand sidebar"
+              : "Collapse sidebar"
+          }
+          title={
+            collapsed
+              ? "Expand sidebar"
+              : "Collapse sidebar"
+          }
+        >
+          <svg
+            width="15"
+            height="15"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            style={{
+              transform: collapsed
+                ? "rotate(180deg)"
+                : "none",
+            }}
+          >
+            <polyline points="15 18 9 12 15 6" />
+          </svg>
+        </button>
 
-        {/* ── Mobile drawer ── */}
-        <aside className={`dash-sidebar dash-sidebar-mobile${open ? " open" : ""}`}>
-          <SidebarContent />
+        <div
+          className={`dash-overlay${
+            open ? " open" : ""
+          }`}
+          onClick={() => setOpen(false)}
+          aria-hidden="true"
+        />
+
+        <aside
+          className={`dash-sidebar dash-sidebar-mobile${
+            open ? " open" : ""
+          }`}
+          aria-hidden={!open}
+        >
+          <SidebarContent
+            pathname={pathname}
+            compact={false}
+            onNavigate={() =>
+              setOpen(false)
+            }
+            profile={profile}
+            billing={billing}
+          />
         </aside>
 
-        {/* ── Main ── */}
-        <main className="dash-main" style={{ flex:1, minHeight:"100vh", display:"flex", flexDirection:"column" }}>
-
-          {/* Mobile top bar */}
-          <div className="dash-mobile-bar" style={{
-            height:52, background:"#fff", alignItems:"center", justifyContent:"space-between",
-            padding:"0 16px", borderBottom:"1px solid #E2E8F0", position:"sticky", top:0, zIndex:30,
-          }}>
-            <button onClick={() => setOpen(true)} style={{ background:"none", border:"none", cursor:"pointer", padding:8, display:"flex", flexDirection:"column", gap:4 }} aria-label="Open menu">
-              <span style={{ width:20, height:2, background:"#0D2137", borderRadius:2, display:"block" }} />
-              <span style={{ width:20, height:2, background:"#0D2137", borderRadius:2, display:"block" }} />
-              <span style={{ width:20, height:2, background:"#0D2137", borderRadius:2, display:"block" }} />
+        <main
+          className="dash-main"
+          style={{
+            display: "flex",
+            minHeight: "100vh",
+            flex: 1,
+            flexDirection: "column",
+          }}
+        >
+          <div
+            className="dash-mobile-bar"
+            style={{
+              position: "sticky",
+              top: 0,
+              zIndex: 30,
+              height: 56,
+              alignItems: "center",
+              justifyContent:
+                "space-between",
+              gap: 10,
+              padding: "0 14px",
+              borderBottom:
+                "1px solid #E2E8F0",
+              background: "#FFFFFF",
+            }}
+          >
+            <button
+              type="button"
+              onClick={() =>
+                setOpen(true)
+              }
+              style={{
+                display: "flex",
+                width: 38,
+                height: 38,
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 4,
+                padding: 8,
+                border: "none",
+                borderRadius: 8,
+                background: "none",
+                cursor: "pointer",
+              }}
+              aria-label="Open navigation menu"
+            >
+              <span
+                style={{
+                  display: "block",
+                  width: 20,
+                  height: 2,
+                  borderRadius: 2,
+                  background: "#0D2137",
+                }}
+              />
+              <span
+                style={{
+                  display: "block",
+                  width: 20,
+                  height: 2,
+                  borderRadius: 2,
+                  background: "#0D2137",
+                }}
+              />
+              <span
+                style={{
+                  display: "block",
+                  width: 20,
+                  height: 2,
+                  borderRadius: 2,
+                  background: "#0D2137",
+                }}
+              />
             </button>
-            <Image src="/logo3.png" alt="PlotWise" width={100} height={36} style={{ objectFit:"contain" }} />
-            <Link href="/assessments" style={{ background:"#A3E635", color:"#0B1628", fontSize:12, fontWeight:700, padding:"7px 12px", borderRadius:7, textDecoration:"none", whiteSpace:"nowrap" }}>
-              + New
+
+            <Image
+              className="dash-mobile-logo"
+              src="/logo3.png"
+              alt="PlotWize"
+              width={100}
+              height={40}
+              style={{
+                objectFit: "contain",
+              }}
+            />
+
+            <Link
+              href="/projects"
+              className="dash-mobile-new-project"
+              style={{
+                padding: "7px 12px",
+                borderRadius: 7,
+                background: "#A3E635",
+                color: "#0B1628",
+                fontSize: 12,
+                fontWeight: 700,
+                textDecoration: "none",
+                whiteSpace: "nowrap",
+              }}
+            >
+              + New Project
             </Link>
           </div>
 
-          {/* Desktop top bar */}
-          <div style={{ height:52, background:"#fff", display:"flex", alignItems:"center", justifyContent:"flex-end", padding:"0 28px", borderBottom:"1px solid #E2E8F0", position:"sticky", top:0, zIndex:20, flexShrink:0 }}
-            className="dash-desktop-bar">
-            <style>{`.dash-desktop-bar { display: flex; } @media(max-width:768px){.dash-desktop-bar{display:none!important;}}`}</style>
-            <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-              <Link href="/assessments" style={{ background:"#EAF3DE", color:"#3B6D11", fontSize:13, fontWeight:600, padding:"7px 14px", borderRadius:7, textDecoration:"none" }}>
-                + New Assessment
-              </Link>
-              <div style={{ width:30, height:30, borderRadius:"50%", background:"linear-gradient(135deg, #A3E635, #3B6D11)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:12, fontWeight:700, color:"#0B1628" }}>U</div>
-            </div>
-          </div>
-
-          {/* Page content */}
-          <div style={{ flex:1, padding:"28px 28px", maxWidth:"100%", overflowX:"hidden" }}>
+          <div className="dash-page-content">
             {children}
           </div>
         </main>

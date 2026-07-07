@@ -61,7 +61,7 @@ export default function CreateOrganizationPage() {
 
         {/* Logo */}
         <div style={{ position: "relative", zIndex: 1, marginBottom: "auto" }}>
-          <Link href="/"><Image src="/logo1.png" alt="PlotWise" width={130} height={44} style={{ objectFit: "contain" }} /></Link>
+          <Link href="/"><Image src="/logo1.png" alt="PlotWize" width={130} height={44} style={{ objectFit: "contain" }} /></Link>
         </div>
 
         {/* Content */}

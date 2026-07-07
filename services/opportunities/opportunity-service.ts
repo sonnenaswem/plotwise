@@ -1,81 +1,140 @@
 import { createClient } from "@/lib/supabase/client";
 
+export type OpportunityDataQuality =
+  | "demonstration"
+  | "provisional"
+  | "verified";
+
+type OpportunityStatisticRow = {
+  borough: string;
+  project_type: string;
+  approved: number;
+  refused: number;
+  data_quality: OpportunityDataQuality;
+  source_name: string;
+  source_period_start: string | null;
+  source_period_end: string | null;
+};
+
+export type OpportunityResult = {
+  borough: string;
+  approved: number;
+  refused: number;
+  total: number;
+  approvalRate: number;
+  dataQuality: OpportunityDataQuality;
+  sourceName: string;
+  sourcePeriodStart: string | null;
+  sourcePeriodEnd: string | null;
+};
+
 export async function getOpportunityData(
   projectType: string
-) {
+): Promise<{
+  data: OpportunityResult[];
+  error: Error | null;
+}> {
+  const normalizedProjectType =
+    projectType.trim();
+
+  if (!normalizedProjectType) {
+    return {
+      data: [],
+      error: new Error(
+        "Please select a project type."
+      ),
+    };
+  }
+
   const supabase = createClient();
 
-  const { data } =
-    await supabase
-      .from("planning_applications")
-      .select("*")
-      .eq(
-        "project_type",
-        projectType
-      );
+  const { data, error } = await supabase
+    .from(
+      "opportunity_borough_statistics"
+    )
+    .select(
+      `
+        borough,
+        project_type,
+        approved,
+        refused,
+        data_quality,
+        source_name,
+        source_period_start,
+        source_period_end
+      `
+    )
+    .eq(
+      "project_type",
+      normalizedProjectType
+    );
 
-  const boroughMap:
-    Record<string, any> = {};
+  if (error) {
+    return {
+      data: [],
+      error: new Error(error.message),
+    };
+  }
 
-  data?.forEach(
-    (application) => {
-      const borough =
-        application.borough;
+  const rows =
+    (data ?? []) as OpportunityStatisticRow[];
 
-      if (!boroughMap[borough]) {
-        boroughMap[borough] = {
-          borough,
-          approved: 0,
-          refused: 0,
-        };
-      }
+  const results = rows
+    .map((row) => {
+      const approved =
+        Number(row.approved) || 0;
 
-      if (
-        application.decision ===
-        "Approved"
-      ) {
-        boroughMap[
-          borough
-        ].approved++;
-      }
+      const refused =
+        Number(row.refused) || 0;
 
-      if (
-        application.decision ===
-        "Refused"
-      ) {
-        boroughMap[
-          borough
-        ].refused++;
-      }
-    }
-  );
-
-  const results =
-    Object.values(
-      boroughMap
-    ).map((item: any) => {
       const total =
-        item.approved +
-        item.refused;
+        approved + refused;
 
       return {
-        ...item,
+        borough: row.borough,
+        approved,
+        refused,
+        total,
+
         approvalRate:
           total > 0
             ? Math.round(
-                (item.approved /
-                  total) *
-                  100
+                (approved / total) * 100
               )
             : 0,
+
+        dataQuality: row.data_quality,
+        sourceName: row.source_name,
+
+        sourcePeriodStart:
+          row.source_period_start,
+
+        sourcePeriodEnd:
+          row.source_period_end,
       };
+    })
+    .sort((first, second) => {
+      if (
+        second.approvalRate !==
+        first.approvalRate
+      ) {
+        return (
+          second.approvalRate -
+          first.approvalRate
+        );
+      }
+
+      if (second.total !== first.total) {
+        return second.total - first.total;
+      }
+
+      return first.borough.localeCompare(
+        second.borough
+      );
     });
 
-  results.sort(
-    (a: any, b: any) =>
-      b.approvalRate -
-      a.approvalRate
-  );
-
-  return results;
+  return {
+    data: results,
+    error: null,
+  };
 }

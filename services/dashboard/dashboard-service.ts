@@ -1,90 +1,174 @@
 import { createClient } from "@/lib/supabase/client";
 
-export async function getDashboardStats() {
+export type DashboardProject = {
+  address: string;
+  borough: string | null;
+  project_type: string;
+};
+
+export type DashboardAssessment = {
+  id: string;
+  score: number;
+  approval_probability: number | null;
+  approval_likelihood: string | null;
+  created_at: string | null;
+  projects: DashboardProject | null;
+};
+
+export type DashboardStats = {
+  totalProjects: number;
+  totalAssessments: number;
+  averageScore: number;
+  averageProbability: number;
+  highRisk: number;
+  mediumRisk: number;
+  lowRisk: number;
+  recentAssessments: DashboardAssessment[];
+};
+
+type SupabaseDashboardAssessment = {
+  id: string;
+  score: number | null;
+  approval_probability: number | null;
+  approval_likelihood: string | null;
+  created_at: string | null;
+  projects:
+    | DashboardProject
+    | DashboardProject[]
+    | null;
+};
+
+function normalizeRelatedProject(
+  relatedProject:
+    | DashboardProject
+    | DashboardProject[]
+    | null
+): DashboardProject | null {
+  if (Array.isArray(relatedProject)) {
+    return relatedProject[0] ?? null;
+  }
+
+  return relatedProject;
+}
+
+export async function getDashboardStats(): Promise<DashboardStats> {
   const supabase = createClient();
 
-  const [
-    projectsResult,
-    assessmentsResult,
-  ] = await Promise.all([
-    supabase
-      .from("projects")
-      .select("id"),
+  const [projectsResult, assessmentsResult] =
+    await Promise.all([
+      supabase.from("projects").select("id"),
 
-    supabase
-      .from("assessments")
-      .select(`
-        id,
-        score,
-        approval_probability,
-        approval_likelihood,
-        created_at,
-        projects (
-          address
+      supabase
+        .from("assessments")
+        .select(
+          `
+            id,
+            score,
+            approval_probability,
+            approval_likelihood,
+            created_at,
+            projects (
+              address,
+              borough,
+              project_type
+            )
+          `
         )
-      `)
-      .order("created_at", {
-        ascending: false,
-      })
-  ]);
+        .order("created_at", {
+          ascending: false,
+        }),
+    ]);
 
-  const projects =
-    projectsResult.data ?? [];
+  if (projectsResult.error) {
+    console.error("DASHBOARD PROJECT FETCH FAILED", {
+      message: projectsResult.error.message,
+      code: projectsResult.error.code,
+      details: projectsResult.error.details,
+      hint: projectsResult.error.hint,
+    });
 
-  const assessments =
-    assessmentsResult.data ?? [];
+    throw new Error(
+      `Projects could not be loaded: ${projectsResult.error.message}`
+    );
+  }
 
-  const totalProjects =
-    projects.length;
+  if (assessmentsResult.error) {
+    console.error(
+      "DASHBOARD ASSESSMENT FETCH FAILED",
+      {
+        message: assessmentsResult.error.message,
+        code: assessmentsResult.error.code,
+        details: assessmentsResult.error.details,
+        hint: assessmentsResult.error.hint,
+      }
+    );
 
-  const totalAssessments =
-    assessments.length;
+    throw new Error(
+      `Assessments could not be loaded: ${assessmentsResult.error.message}`
+    );
+  }
+
+  const projects = projectsResult.data ?? [];
+
+  const rawAssessments =
+    (assessmentsResult.data ??
+      []) as SupabaseDashboardAssessment[];
+
+  const assessments: DashboardAssessment[] =
+    rawAssessments.map((assessment) => ({
+      id: assessment.id,
+      score: Number(assessment.score ?? 0),
+      approval_probability:
+        assessment.approval_probability,
+      approval_likelihood:
+        assessment.approval_likelihood,
+      created_at: assessment.created_at,
+      projects: normalizeRelatedProject(
+        assessment.projects
+      ),
+    }));
+
+  const totalProjects = projects.length;
+  const totalAssessments = assessments.length;
 
   const averageScore =
-    assessments.length > 0
+    totalAssessments > 0
       ? Math.round(
           assessments.reduce(
-            (sum, item) =>
-              sum + item.score,
+            (sum, assessment) =>
+              sum + assessment.score,
             0
-          ) /
-            assessments.length
+          ) / totalAssessments
         )
       : 0;
 
   const averageProbability =
-    assessments.length > 0
+    totalAssessments > 0
       ? Math.round(
           assessments.reduce(
-            (sum, item) =>
+            (sum, assessment) =>
               sum +
-              (item.approval_probability ??
-                0),
+              Number(
+                assessment.approval_probability ?? 0
+              ),
             0
-          ) /
-            assessments.length
+          ) / totalAssessments
         )
       : 0;
 
-  const highRisk =
-    assessments.filter(
-      (a) => a.score < 40
-    ).length;
+  const highRisk = assessments.filter(
+    (assessment) => assessment.score < 60
+  ).length;
 
-  const mediumRisk =
-    assessments.filter(
-      (a) =>
-        a.score >= 40 &&
-        a.score < 80
-    ).length;
+  const mediumRisk = assessments.filter(
+    (assessment) =>
+      assessment.score >= 60 &&
+      assessment.score < 80
+  ).length;
 
-  const lowRisk =
-    assessments.filter(
-      (a) => a.score >= 80
-    ).length;
-  
-  const recentAssessments =
-    assessments.slice(0, 5);  
+  const lowRisk = assessments.filter(
+    (assessment) => assessment.score >= 80
+  ).length;
 
   return {
     totalProjects,
@@ -94,6 +178,6 @@ export async function getDashboardStats() {
     highRisk,
     mediumRisk,
     lowRisk,
-    recentAssessments,
+    recentAssessments: assessments.slice(0, 5),
   };
 }
