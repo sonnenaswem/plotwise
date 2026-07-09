@@ -88,8 +88,8 @@ export async function getCurrentAccountProfile(): Promise<{
   const fullName =
     [firstName, lastName]
       .filter(Boolean)
-      .join(" ") ||
-    email ||
+      .join(" ")
+      .trim() ||
     "Your account";
 
   return {
@@ -199,7 +199,8 @@ export async function updateCurrentAccountProfile(input: {
         data.last_name,
       ]
         .filter(Boolean)
-        .join(" "),
+        .join(" ")
+        .trim(),
       initials: createInitials(
         data.first_name || "",
         data.last_name || "",

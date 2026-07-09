@@ -12,7 +12,7 @@ const LIME  = "#A3E635";
 /* ── tiny helpers ── */
 function StatCard({ label, value, sub, accent, bg, icon }: { label: string; value: string | number; sub: string; accent: string; bg: string; icon: React.ReactNode }) {
   return (
-    <div style={{ background: "#fff", border: "1px solid #E8EDF2", borderRadius: 12, padding: "18px 20px", position: "relative", overflow: "hidden", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
+    <div className="trends-card trends-stat-card" style={{ background: "#fff", border: "1px solid #E8EDF2", borderRadius: 12, padding: "18px 20px", position: "relative", overflow: "hidden", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
       <div style={{ position: "absolute", top: 0, left: 0, width: 3, height: "100%", background: accent, borderRadius: "12px 0 0 12px" }} />
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 }}>
         <p style={{ fontSize: 11, fontWeight: 600, color: "#64748B", margin: 0, textTransform: "uppercase", letterSpacing: "0.6px" }}>{label}</p>
@@ -28,10 +28,10 @@ function ApprovalBar({ label, rate, total, rank }: { label: string; rate: number
   const color = rate >= 70 ? LIME : rate >= 50 ? "#F59E0B" : "#EF4444";
   const isTop = rank <= 3;
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "28px 180px 1fr 56px", gap: 12, alignItems: "center", padding: "10px 0", borderBottom: "1px solid #F8FAFC" }}>
+    <div className="trends-approval-bar" style={{ display: "grid", gridTemplateColumns: "28px 180px 1fr 56px", gap: 12, alignItems: "center", padding: "10px 0", borderBottom: "1px solid #F8FAFC" }}>
       <span style={{ fontSize: 11, fontWeight: 700, color: isTop ? "#0E7490" : "#CBD5E1" }}>#{rank}</span>
-      <span style={{ fontSize: 13, fontWeight: rank === 1 ? 700 : 500, color: NAVY, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{label}</span>
-      <div style={{ height: 6, background: "#F1F5F9", borderRadius: 3, overflow: "hidden" }}>
+      <span className="trends-borough-name" style={{ fontSize: 13, fontWeight: rank === 1 ? 700 : 500, color: NAVY, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{label}</span>
+      <div className="trends-approval-meter" style={{ height: 6, background: "#F1F5F9", borderRadius: 3, overflow: "hidden" }}>
         <div style={{ width: `${rate}%`, height: "100%", background: color, borderRadius: 3, transition: "width 0.8s ease" }} />
       </div>
       <span style={{ fontSize: 12, fontWeight: 700, color, textAlign: "right" }}>{rate}%</span>
@@ -41,7 +41,7 @@ function ApprovalBar({ label, rate, total, rank }: { label: string; rate: number
 
 function InsightCard({ title, value, detail, color, bg }: { title: string; value: string; detail: string; color: string; bg: string }) {
   return (
-    <div style={{ background: bg, border: `1px solid ${color}33`, borderRadius: 12, padding: "18px 20px", borderLeft: `3px solid ${color}` }}>
+    <div className="trends-card trends-insight-card" style={{ background: bg, border: `1px solid ${color}33`, borderRadius: 12, padding: "18px 20px", borderLeft: `3px solid ${color}` }}>
       <p style={{ fontSize: 11, fontWeight: 700, color: "#64748B", margin: "0 0 8px", textTransform: "uppercase", letterSpacing: "0.6px" }}>{title}</p>
       <p style={{ ...serif, fontSize: 26, fontWeight: 600, color, margin: "0 0 4px", lineHeight: 1 }}>{value}</p>
       <p style={{ fontSize: 12, color: "#64748B", margin: 0 }}>{detail}</p>
@@ -96,16 +96,181 @@ export default function TrendsPage() {
   ];
 
   return (
-    <div style={{ ...sans, maxWidth: 1100 }}>
+    <>
+      <style>{`
+        .trends-page,
+        .trends-page * {
+          box-sizing: border-box;
+        }
+
+        .trends-page {
+          width: 100%;
+          max-width: 1100px;
+          min-width: 0;
+        }
+
+        .trends-card,
+        .trends-panel-card,
+        .trends-guidance-card {
+          width: 100%;
+          min-width: 0;
+        }
+
+        .trends-kpi-grid {
+          display: grid;
+          grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+        }
+
+        .trends-spotlight-grid,
+        .trends-guidance-grid {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        }
+
+        .trends-insight-grid,
+        .trends-risk-bands-grid {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+        }
+
+        .trends-tab-strip {
+          max-width: 100%;
+          overflow-x: auto;
+        }
+
+        .trends-table-scroll {
+          width: 100%;
+          overflow-x: auto;
+        }
+
+        .trends-table-inner {
+          min-width: 640px;
+        }
+
+        .trends-borough-name,
+        .trends-safe-text {
+          min-width: 0;
+          overflow-wrap: anywhere;
+        }
+
+        .trends-progress-track {
+          width: 100%;
+          min-width: 0;
+        }
+
+        @media (max-width: 900px) {
+          .trends-kpi-grid,
+          .trends-insight-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+          }
+
+          .trends-risk-bands-grid {
+            grid-template-columns: minmax(0, 1fr) !important;
+          }
+
+          .trends-risk-band {
+            border-right: none !important;
+            border-bottom: 1px solid #F1F5F9;
+          }
+
+          .trends-risk-band:last-child {
+            border-bottom: none;
+          }
+        }
+
+        @media (max-width: 700px) {
+          .trends-page {
+            max-width: none;
+          }
+
+          .trends-kpi-grid,
+          .trends-spotlight-grid,
+          .trends-guidance-grid,
+          .trends-insight-grid {
+            grid-template-columns: minmax(0, 1fr) !important;
+          }
+
+          .trends-spotlight-content {
+            align-items: stretch !important;
+            flex-direction: column;
+          }
+
+          .trends-spotlight-score {
+            width: 100%;
+          }
+
+          .trends-tab-strip {
+            width: 100% !important;
+          }
+
+          .trends-tab-button {
+            flex: 1 1 0;
+            min-width: 0;
+            white-space: normal;
+          }
+
+          .trends-approval-bar {
+            grid-template-columns: 28px minmax(0, 1fr) 48px !important;
+            gap: 8px !important;
+          }
+
+          .trends-approval-meter {
+            grid-column: 2 / -1;
+          }
+
+          .trends-borough-name {
+            white-space: normal !important;
+            text-overflow: clip !important;
+          }
+        }
+
+        @media (max-width: 560px) {
+          .trends-header {
+            margin-bottom: 20px !important;
+          }
+
+          .trends-header h1 {
+            font-size: 28px !important;
+          }
+
+          .trends-stat-card,
+          .trends-spotlight-card,
+          .trends-insight-card {
+            padding: 16px !important;
+          }
+
+          .trends-panel-header {
+            padding: 15px 16px !important;
+          }
+
+          .trends-panel-body {
+            padding: 8px 16px 14px !important;
+          }
+
+          .trends-guidance-card {
+            padding: 22px 18px !important;
+          }
+
+          .trends-guidance-card h2 {
+            font-size: 20px !important;
+          }
+
+          .trends-risk-band {
+            padding: 15px 16px !important;
+          }
+        }
+      `}</style>
+
+      <div className="trends-page" style={sans}>
 
       {/* Header */}
-      <div style={{ marginBottom: 28 }}>
+      <div className="trends-header" style={{ marginBottom: 28 }}>
         <h1 style={{ ...serif, fontSize: 32, fontWeight: 300, color: NAVY, letterSpacing: "-0.5px", margin: "0 0 4px" }}>Planning Trends</h1>
         <p style={{ fontSize: 14, color: "#94A3B8", margin: 0 }}>Historical planning intelligence across Greater London</p>
       </div>
 
       {/* KPI row */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 14, marginBottom: 24 }}>
+      <div className="trends-kpi-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 14, marginBottom: 24 }}>
         <StatCard label="Total applications"  value={totalApps.toLocaleString()} sub="In London database" accent={LIME} bg="#F2FCE4"
           icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#639922" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>} />
         <StatCard label="Overall approval rate" value={`${overallRate}%`}  sub="Across all boroughs" accent="#0E7490" bg="#F0F9FF"
@@ -117,37 +282,37 @@ export default function TrendsPage() {
       </div>
 
       {/* Best / Worst spotlight */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 24 }}>
-        <div style={{ background: "#fff", border: "1px solid #A7F3D0", borderRadius: 12, padding: "20px 24px", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
+      <div className="trends-spotlight-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 24 }}>
+        <div className="trends-card trends-spotlight-card" style={{ background: "#fff", border: "1px solid #A7F3D0", borderRadius: 12, padding: "20px 24px", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
             <span style={{ fontSize: 18 }}>🏆</span>
             <p style={{ fontSize: 11, fontWeight: 700, color: "#059669", margin: 0, textTransform: "uppercase", letterSpacing: "0.6px" }}>Highest approval borough</p>
           </div>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
-            <div>
+          <div className="trends-spotlight-content" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 14 }}>
+            <div className="trends-safe-text">
               <p style={{ ...serif, fontSize: 22, fontWeight: 600, color: NAVY, margin: "0 0 4px" }}>{best?.borough}</p>
               <p style={{ fontSize: 12, color: "#64748B", margin: "0 0 2px" }}>{best?.approved} approved of {best?.total} applications</p>
               <p style={{ fontSize: 12, color: "#94A3B8", margin: 0 }}>Best performing London borough</p>
             </div>
-            <div style={{ textAlign: "center", padding: "10px 16px", background: "#ECFDF5", borderRadius: 10 }}>
+            <div className="trends-spotlight-score" style={{ textAlign: "center", padding: "10px 16px", background: "#ECFDF5", borderRadius: 10 }}>
               <p style={{ ...serif, fontSize: 36, fontWeight: 700, color: "#059669", margin: "0 0 2px", lineHeight: 1 }}>{best?.approvalRate}%</p>
               <p style={{ fontSize: 11, color: "#059669", margin: 0, opacity: 0.7 }}>approval rate</p>
             </div>
           </div>
         </div>
 
-        <div style={{ background: "#fff", border: "1px solid #FECACA", borderRadius: 12, padding: "20px 24px", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
+        <div className="trends-card trends-spotlight-card" style={{ background: "#fff", border: "1px solid #FECACA", borderRadius: 12, padding: "20px 24px", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
             <span style={{ fontSize: 18 }}>⚠️</span>
             <p style={{ fontSize: 11, fontWeight: 700, color: "#DC2626", margin: 0, textTransform: "uppercase", letterSpacing: "0.6px" }}>Most challenging borough</p>
           </div>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
-            <div>
+          <div className="trends-spotlight-content" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 14 }}>
+            <div className="trends-safe-text">
               <p style={{ ...serif, fontSize: 22, fontWeight: 600, color: NAVY, margin: "0 0 4px" }}>{worst?.borough}</p>
               <p style={{ fontSize: 12, color: "#64748B", margin: "0 0 2px" }}>{worst?.refused} refused of {worst?.total} applications</p>
               <p style={{ fontSize: 12, color: "#94A3B8", margin: 0 }}>Toughest planning environment</p>
             </div>
-            <div style={{ textAlign: "center", padding: "10px 16px", background: "#FEF2F2", borderRadius: 10 }}>
+            <div className="trends-spotlight-score" style={{ textAlign: "center", padding: "10px 16px", background: "#FEF2F2", borderRadius: 10 }}>
               <p style={{ ...serif, fontSize: 36, fontWeight: 700, color: "#DC2626", margin: "0 0 2px", lineHeight: 1 }}>{worst?.approvalRate}%</p>
               <p style={{ fontSize: 11, color: "#DC2626", margin: 0, opacity: 0.7 }}>approval rate</p>
             </div>
@@ -156,9 +321,9 @@ export default function TrendsPage() {
       </div>
 
       {/* Tab strip */}
-      <div style={{ display: "flex", gap: 4, background: "#F1F5F9", padding: 4, borderRadius: 10, width: "fit-content", marginBottom: 20 }}>
+      <div className="trends-tab-strip" style={{ display: "flex", gap: 4, background: "#F1F5F9", padding: 4, borderRadius: 10, width: "fit-content", marginBottom: 20 }}>
         {tabs.map((t) => (
-          <button key={t.key} onClick={() => setActiveTab(t.key)} style={{
+          <button className="trends-tab-button" key={t.key} onClick={() => setActiveTab(t.key)} style={{
             fontSize: 12, fontWeight: 600, padding: "7px 18px", borderRadius: 7, border: "none", cursor: "pointer",
             fontFamily: "'Inter', system-ui, sans-serif",
             background: activeTab === t.key ? "#fff" : "transparent",
@@ -171,12 +336,12 @@ export default function TrendsPage() {
 
       {/* Tab: Borough performance */}
       {activeTab === "boroughs" && (
-        <div style={{ background: "#fff", border: "1px solid #E8EDF2", borderRadius: 14, overflow: "hidden", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
-          <div style={{ padding: "18px 24px", borderBottom: "1px solid #F1F5F9" }}>
+        <div className="trends-panel-card" style={{ background: "#fff", border: "1px solid #E8EDF2", borderRadius: 14, overflow: "hidden", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
+          <div className="trends-panel-header" style={{ padding: "18px 24px", borderBottom: "1px solid #F1F5F9" }}>
             <h2 style={{ fontSize: 14, fontWeight: 600, color: NAVY, margin: "0 0 2px" }}>Borough Approval Rankings</h2>
             <p style={{ fontSize: 12, color: "#94A3B8", margin: 0 }}>All {sorted.length} London boroughs ranked by historical approval rate</p>
           </div>
-          <div style={{ padding: "8px 24px 16px" }}>
+          <div className="trends-panel-body" style={{ padding: "8px 24px 16px" }}>
             {sorted.map((b, i) => (
               <ApprovalBar key={b.borough} label={b.borough} rate={b.approvalRate} total={b.total} rank={i + 1} />
             ))}
@@ -188,7 +353,7 @@ export default function TrendsPage() {
       {activeTab === "types" && (
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           {/* Score distribution visualised */}
-          <div style={{ background: "#fff", border: "1px solid #E8EDF2", borderRadius: 14, padding: "24px", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
+          <div className="trends-panel-card trends-stat-card" style={{ background: "#fff", border: "1px solid #E8EDF2", borderRadius: 14, padding: "24px", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
             <h2 style={{ fontSize: 14, fontWeight: 600, color: NAVY, margin: "0 0 4px" }}>Risk Score Distribution</h2>
             <p style={{ fontSize: 12, color: "#94A3B8", margin: "0 0 20px" }}>Based on {assessments.length} assessments in your portfolio</p>
 
@@ -208,7 +373,7 @@ export default function TrendsPage() {
                     <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 99, background: row.bg, color: row.color }}>{row.pct}%</span>
                   </div>
                 </div>
-                <div style={{ height: 8, background: "#F1F5F9", borderRadius: 4, overflow: "hidden" }}>
+                <div className="trends-progress-track" style={{ height: 8, background: "#F1F5F9", borderRadius: 4, overflow: "hidden" }}>
                   <div style={{ width: `${row.pct}%`, height: "100%", background: row.color, borderRadius: 4, transition: "width 0.8s ease" }} />
                 </div>
               </div>
@@ -216,27 +381,31 @@ export default function TrendsPage() {
           </div>
 
           {/* Borough approval rate mini-table */}
-          <div style={{ background: "#fff", border: "1px solid #E8EDF2", borderRadius: 14, overflow: "hidden", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
-            <div style={{ padding: "18px 24px", borderBottom: "1px solid #F1F5F9" }}>
+          <div className="trends-panel-card" style={{ background: "#fff", border: "1px solid #E8EDF2", borderRadius: 14, overflow: "hidden", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
+            <div className="trends-panel-header" style={{ padding: "18px 24px", borderBottom: "1px solid #F1F5F9" }}>
               <h2 style={{ fontSize: 14, fontWeight: 600, color: NAVY, margin: "0 0 2px" }}>Top 10 Boroughs by Volume</h2>
               <p style={{ fontSize: 12, color: "#94A3B8", margin: 0 }}>Highest application volumes across Greater London</p>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1.8fr 80px 80px 80px 100px", padding: "10px 24px", background: "#FAFBFC", fontSize: 10, fontWeight: 700, letterSpacing: "0.8px", textTransform: "uppercase", color: "#94A3B8", borderBottom: "1px solid #F1F5F9" }}>
-              <span>Borough</span><span>Total</span><span>Approved</span><span>Refused</span><span>Rate</span>
-            </div>
-            {[...boroughs].sort((a, b) => b.total - a.total).slice(0, 10).map((b, i) => (
-              <div key={b.borough} style={{
-                display: "grid", gridTemplateColumns: "1.8fr 80px 80px 80px 100px",
-                padding: "12px 24px", alignItems: "center",
-                borderBottom: i < 9 ? "1px solid #F8FAFC" : "none",
-              }}>
-                <span style={{ fontSize: 13, fontWeight: 500, color: NAVY }}>{b.borough}</span>
-                <span style={{ fontSize: 13, color: "#475569" }}>{b.total}</span>
-                <span style={{ fontSize: 13, color: "#16A34A", fontWeight: 500 }}>{b.approved}</span>
-                <span style={{ fontSize: 13, color: "#DC2626", fontWeight: 500 }}>{b.refused}</span>
-                <span style={{ fontSize: 12, fontWeight: 700, color: b.approvalRate >= 70 ? "#16A34A" : b.approvalRate >= 50 ? "#D97706" : "#DC2626" }}>{b.approvalRate}%</span>
+            <div className="trends-table-scroll">
+              <div className="trends-table-inner">
+                <div style={{ display: "grid", gridTemplateColumns: "1.8fr 80px 80px 80px 100px", padding: "10px 24px", background: "#FAFBFC", fontSize: 10, fontWeight: 700, letterSpacing: "0.8px", textTransform: "uppercase", color: "#94A3B8", borderBottom: "1px solid #F1F5F9" }}>
+                  <span>Borough</span><span>Total</span><span>Approved</span><span>Refused</span><span>Rate</span>
+                </div>
+                {[...boroughs].sort((a, b) => b.total - a.total).slice(0, 10).map((b, i) => (
+                  <div key={b.borough} style={{
+                    display: "grid", gridTemplateColumns: "1.8fr 80px 80px 80px 100px",
+                    padding: "12px 24px", alignItems: "center",
+                    borderBottom: i < 9 ? "1px solid #F8FAFC" : "none",
+                  }}>
+                    <span className="trends-safe-text" style={{ fontSize: 13, fontWeight: 500, color: NAVY }}>{b.borough}</span>
+                    <span style={{ fontSize: 13, color: "#475569" }}>{b.total}</span>
+                    <span style={{ fontSize: 13, color: "#16A34A", fontWeight: 500 }}>{b.approved}</span>
+                    <span style={{ fontSize: 13, color: "#DC2626", fontWeight: 500 }}>{b.refused}</span>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: b.approvalRate >= 70 ? "#16A34A" : b.approvalRate >= 50 ? "#D97706" : "#DC2626" }}>{b.approvalRate}%</span>
+                  </div>
+                ))}
               </div>
-            ))}
+            </div>
           </div>
         </div>
       )}
@@ -244,7 +413,7 @@ export default function TrendsPage() {
       {/* Tab: Market insights */}
       {activeTab === "risk" && (
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 14 }}>
+          <div className="trends-insight-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 14 }}>
             <InsightCard title="London-wide approval rate" value={`${overallRate}%`}
               detail="Historical average across all boroughs and project types"
               color="#0E7490" bg="#F0F9FF" />
@@ -257,12 +426,12 @@ export default function TrendsPage() {
           </div>
 
           {/* Strategic guidance */}
-          <div style={{ background: NAVY, borderRadius: 14, padding: "28px 32px" }}>
+          <div className="trends-guidance-card" style={{ background: NAVY, borderRadius: 14, padding: "28px 32px" }}>
             <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "1.2px", textTransform: "uppercase", color: LIME, margin: "0 0 10px" }}>Strategic guidance</p>
             <h2 style={{ ...serif, fontSize: 22, fontWeight: 300, color: "#fff", margin: "0 0 20px", letterSpacing: "-0.3px" }}>
               What the data tells us
             </h2>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+            <div className="trends-guidance-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
               {[
                 { icon: "📍", title: "Location is paramount", body: `Approval rates vary by up to ${best && worst ? best.approvalRate - worst.approvalRate : "—"}% between London boroughs. Borough selection is the single biggest variable in planning success.` },
                 { icon: "📊", title: "Volume signals consistency", body: "High-volume boroughs have more predictable outcomes. Boroughs with large datasets give you stronger comparable evidence for your application." },
@@ -271,7 +440,7 @@ export default function TrendsPage() {
               ].map((tip) => (
                 <div key={tip.title} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
                   <span style={{ fontSize: 20, flexShrink: 0 }}>{tip.icon}</span>
-                  <div>
+                  <div className="trends-safe-text">
                     <p style={{ fontSize: 13, fontWeight: 600, color: "#fff", margin: "0 0 4px" }}>{tip.title}</p>
                     <p style={{ fontSize: 12, color: "rgba(255,255,255,0.55)", lineHeight: 1.6, margin: 0 }}>{tip.body}</p>
                   </div>
@@ -281,25 +450,25 @@ export default function TrendsPage() {
           </div>
 
           {/* Distribution table */}
-          <div style={{ background: "#fff", border: "1px solid #E8EDF2", borderRadius: 14, overflow: "hidden", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
-            <div style={{ padding: "18px 24px", borderBottom: "1px solid #F1F5F9" }}>
+          <div className="trends-panel-card" style={{ background: "#fff", border: "1px solid #E8EDF2", borderRadius: 14, overflow: "hidden", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
+            <div className="trends-panel-header" style={{ padding: "18px 24px", borderBottom: "1px solid #F1F5F9" }}>
               <h2 style={{ fontSize: 14, fontWeight: 600, color: NAVY, margin: "0 0 2px" }}>Borough Risk Bands</h2>
               <p style={{ fontSize: 12, color: "#94A3B8", margin: 0 }}>How each borough falls into approval risk categories</p>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 0 }}>
+            <div className="trends-risk-bands-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 0 }}>
               {[
                 { label: "Favourable (70%+)",    boroughs: sorted.filter(b => b.approvalRate >= 70),             color: "#059669", bg: "#ECFDF5", border: "#A7F3D0" },
                 { label: "Moderate (50–69%)",    boroughs: sorted.filter(b => b.approvalRate >= 50 && b.approvalRate < 70), color: "#D97706", bg: "#FFFBEB", border: "#FDE68A" },
                 { label: "High risk (<50%)",     boroughs: sorted.filter(b => b.approvalRate < 50),              color: "#DC2626", bg: "#FEF2F2", border: "#FECACA" },
               ].map((band, bi) => (
-                <div key={band.label} style={{ padding: "16px 20px", borderRight: bi < 2 ? "1px solid #F1F5F9" : "none" }}>
+                <div className="trends-risk-band" key={band.label} style={{ padding: "16px 20px", borderRight: bi < 2 ? "1px solid #F1F5F9" : "none" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
                     <span style={{ fontSize: 11, fontWeight: 700, color: band.color, background: band.bg, border: `1px solid ${band.border}`, padding: "3px 8px", borderRadius: 99 }}>{band.label}</span>
                   </div>
                   <p style={{ fontSize: 12, color: "#94A3B8", margin: "0 0 10px" }}>{band.boroughs.length} borough{band.boroughs.length !== 1 ? "s" : ""}</p>
                   {band.boroughs.map(b => (
-                    <div key={b.borough} style={{ display: "flex", justifyContent: "space-between", padding: "4px 0", fontSize: 12, borderBottom: "1px solid #F8FAFC" }}>
-                      <span style={{ color: "#475569" }}>{b.borough}</span>
+                    <div key={b.borough} style={{ display: "flex", justifyContent: "space-between", gap: 10, padding: "4px 0", fontSize: 12, borderBottom: "1px solid #F8FAFC" }}>
+                      <span className="trends-safe-text" style={{ color: "#475569" }}>{b.borough}</span>
                       <span style={{ fontWeight: 600, color: band.color }}>{b.approvalRate}%</span>
                     </div>
                   ))}
@@ -309,6 +478,7 @@ export default function TrendsPage() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 }

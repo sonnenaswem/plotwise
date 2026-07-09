@@ -152,6 +152,14 @@ export default function ProfilePage() {
       : "Individual account";
   }, [billing]);
 
+  const displayName =
+    profile?.fullName?.trim() ||
+    [profile?.firstName, profile?.lastName]
+      .filter(Boolean)
+      .join(" ")
+      .trim() ||
+    "Your account";
+
   async function handleSave(
     event: React.FormEvent<HTMLFormElement>
   ) {
@@ -236,9 +244,15 @@ export default function ProfilePage() {
   return (
     <>
       <style>{`
+        .profile-page,
+        .profile-page * {
+          box-sizing: border-box;
+        }
+
         .profile-page {
           width: 100%;
           max-width: 1080px;
+          min-width: 0;
         }
 
         .profile-hero {
@@ -274,6 +288,8 @@ export default function ProfilePage() {
         }
 
         .profile-card {
+          width: 100%;
+          min-width: 0;
           border: 1px solid #E3E9EF;
           border-radius: 17px;
           background: #FFFFFF;
@@ -306,6 +322,26 @@ export default function ProfilePage() {
           grid-template-columns:
             repeat(2, minmax(0, 1fr));
           gap: 16px;
+        }
+
+        .profile-summary-name,
+        .profile-wrap-text {
+          min-width: 0;
+          overflow-wrap: anywhere;
+        }
+
+        .profile-plan-card,
+        .profile-info-card {
+          width: 100%;
+          min-width: 0;
+        }
+
+        .profile-info-grid {
+          display: grid;
+          grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+          gap: 12px;
+          margin-top: 24px;
         }
 
         .profile-input {
@@ -381,6 +417,11 @@ export default function ProfilePage() {
             grid-template-columns:
               minmax(0, 1fr);
           }
+
+          .profile-summary-card {
+            max-width: 460px;
+            margin: 0 auto;
+          }
         }
 
         @media (max-width: 620px) {
@@ -394,6 +435,15 @@ export default function ProfilePage() {
 
           .profile-hero-inner {
             padding: 25px 22px !important;
+            align-items: flex-start !important;
+            flex-direction: column;
+            gap: 18px !important;
+          }
+
+          .profile-hero-badge {
+            align-self: flex-start;
+            max-width: 100%;
+            white-space: normal;
           }
 
           .profile-fields {
@@ -405,8 +455,25 @@ export default function ProfilePage() {
             border-radius: 13px;
           }
 
+          .profile-summary-card {
+            max-width: none;
+            padding: 20px !important;
+          }
+
           .profile-form-card {
             padding: 20px !important;
+          }
+
+          .profile-form-header,
+          .profile-plan-header,
+          .profile-trial-row {
+            align-items: flex-start !important;
+            flex-direction: column;
+          }
+
+          .profile-info-grid {
+            grid-template-columns:
+              minmax(0, 1fr);
           }
 
           .profile-save-row {
@@ -488,6 +555,7 @@ export default function ProfilePage() {
             </div>
 
             <div
+              className="profile-hero-badge"
               style={{
                 display: "flex",
                 flexShrink: 0,
@@ -608,6 +676,7 @@ export default function ProfilePage() {
                 }}
               >
                 <h2
+                  className="profile-summary-name"
                   style={{
                     margin: 0,
                     color: "#0D2137",
@@ -615,8 +684,7 @@ export default function ProfilePage() {
                     lineHeight: 1.3,
                   }}
                 >
-                  {profile?.fullName ||
-                    "Your account"}
+                  {displayName}
                 </h2>
 
                 <BadgeCheck
@@ -641,8 +709,11 @@ export default function ProfilePage() {
                 style={{
                   display: "inline-flex",
                   alignItems: "center",
+                  justifyContent: "center",
+                  flexWrap: "wrap",
                   gap: 6,
                   marginTop: 13,
+                  maxWidth: "100%",
                   padding: "6px 10px",
                   borderRadius: 99,
                   background: "#F0F9FF",
@@ -682,8 +753,10 @@ export default function ProfilePage() {
                 background:
                   "linear-gradient(135deg, #F7FCEB, #F8FAFC)",
               }}
+              className="profile-plan-card"
             >
               <div
+                className="profile-plan-header"
                 style={{
                   display: "flex",
                   alignItems: "flex-start",
@@ -709,6 +782,7 @@ export default function ProfilePage() {
                   </p>
 
                   <p
+                    className="profile-wrap-text"
                     style={{
                       ...serif,
                       margin: 0,
@@ -767,6 +841,7 @@ export default function ProfilePage() {
                   }}
                 >
                   <div
+                    className="profile-trial-row"
                     style={{
                       display: "flex",
                       alignItems: "center",
@@ -827,6 +902,7 @@ export default function ProfilePage() {
                   </div>
 
                   <div
+                    className="profile-wrap-text"
                     style={{
                       display: "flex",
                       alignItems: "center",
@@ -856,6 +932,7 @@ export default function ProfilePage() {
                 alignItems: "center",
                 justifyContent:
                   "center",
+                flexWrap: "wrap",
                 gap: 8,
                 marginTop: 14,
                 padding: "11px 13px",
@@ -867,6 +944,7 @@ export default function ProfilePage() {
                 fontSize: 12,
                 fontWeight: 750,
                 textDecoration: "none",
+                textAlign: "center",
               }}
             >
               <CreditCard size={15} />
@@ -882,6 +960,7 @@ export default function ProfilePage() {
             }}
           >
             <div
+              className="profile-form-header"
               style={{
                 display: "flex",
                 alignItems: "flex-start",
@@ -1082,15 +1161,10 @@ export default function ProfilePage() {
               </label>
 
               <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns:
-                    "repeat(2, minmax(0, 1fr))",
-                  gap: 12,
-                  marginTop: 24,
-                }}
+                className="profile-info-grid"
               >
                 <div
+                  className="profile-info-card"
                   style={{
                     display: "flex",
                     alignItems: "flex-start",
@@ -1138,6 +1212,7 @@ export default function ProfilePage() {
                 </div>
 
                 <div
+                  className="profile-info-card"
                   style={{
                     display: "flex",
                     alignItems: "flex-start",
