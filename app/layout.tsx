@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import Script from "next/script";
 
 export const metadata: Metadata = {
   title: "PlotWize — Planning Intelligence for London",
@@ -25,7 +26,23 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body>{children}</body>
+      <body>
+        {children}
+        
+        <Script
+
+          id="cloudflare-web-analytics"
+
+          src="https://static.cloudflareinsights.com/beacon.min.js"
+
+          type="module"
+
+          data-cf-beacon='{"token":"024331c28aef4983a5a3eb103deb25d8"}'
+
+          strategy="afterInteractive"
+
+        />
+      </body>
     </html>
   );
 }
